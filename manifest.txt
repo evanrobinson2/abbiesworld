@@ -1,0 +1,100 @@
+- .ipynb_checkpoints/
+  - Print File and Directory Hierarchy to File and Console-checkpoint.ipynb
+- assets/
+  - audio/
+  - images/
+    - worldmap.png
+- index.html
+- ...
+- scripts/
+  - main.js
+  - phaser.js
+- styles/
+  - styles.css
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello World Game</title>
+  <link rel="stylesheet" href="styles/styles.css">
+  <script src="scripts/phaser.js"></script>
+</head>
+<body>
+  <div id="gameContainer"></div>
+  <button id="endButton">End Game</button>
+  <script src="scripts/main.js"></script>
+</body>
+</html>
+```
+File "manifest.txt" was deliberately suppressed.
+File "Print File and Directory Hierarchy to File and Console.ipynb" was deliberately suppressed.
+File "Print File and Directory Hierarchy to File and Console-checkpoint.ipynb" was deliberately suppressed.
+File "worldmap.png" was deliberately suppressed.
+```js
+// main.js
+
+const config = {
+  type: Phaser.AUTO,
+  width: 1920,
+  height: 1080,
+  parent: 'gameContainer',
+  scene: {
+    preload: preload,
+    create: create
+  }
+};
+
+const game = new Phaser.Game(config);
+
+function preload() {
+  this.load.image('worldmap', 'assets/images/worldmap.png');
+}
+
+function create() {
+  const helloText = this.add.text(
+    config.width / 2,
+    config.height / 2,
+    'Hello World',
+    { fontSize: '32px', fill: '#000', align: 'center' }
+  );
+  helloText.setOrigin(0.5);
+
+  const endButton = document.getElementById('endButton');
+  endButton.addEventListener('click', function() {
+    game.destroy();
+  });
+
+  const worldMap = this.add.image(config.width / 2, config.height / 2, 'worldmap');    
+  worldMap.setOrigin(0.5);
+}
+```
+File "phaser.js" was deliberately suppressed.
+```css
+body {
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  canvas {
+    display: block;
+  }
+  
+  #gameContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  #endButton {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+```
