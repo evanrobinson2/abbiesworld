@@ -1,3 +1,5 @@
+import { updateShipVelocity, updateShipRotation, updateShipScale } from './helpers.js';
+
 const config = {
   type: Phaser.AUTO,
   width: 1920,
@@ -6,7 +8,7 @@ const config = {
   physics: {
     default: 'arcade',
     arcade: {
-      gravity: { y: 000 },
+      gravity: { y: 0 },
       debug: false,
     },
   },
@@ -23,6 +25,7 @@ let cursors;
 let keyA;
 let keyD;
 let keyS;
+let keyW;
 let keySpace;
 let keyQ;
 let keyE;
@@ -55,33 +58,7 @@ function create() {
 }
 
 function update() {
-  if (keyA.isDown) {
-    ship.body.velocity.x -= 1;
-  } else if (keyD.isDown) {
-    ship.body.velocity.x += 1;
-  }
-
-  if (keyS.isDown) {
-    ship.body.velocity.y += 1;
-  } else if (keyW.isDown) {
-    ship.body.velocity.y -= 1;
-  }
-
-  if (keySpace.isDown) {
-    ship.body.velocity.x -= 1; if ( ship.body.velocity.x < 0 ) ship.body.velocity.x = 0;
-    ship.body.velocity.y -= 1; if ( ship.body.velocity.y < 0 ) ship.body.velocity.y = 0;
-  }
-
-  if (keyQ.isDown) {
-    ship.rotation -= Phaser.Math.DegToRad(1.5);
-  } else if (keyE.isDown) {
-    ship.rotation += Phaser.Math.DegToRad(1.5);
-  }
-
-  if (keyDown.isDown) {
-    ship.setScale(ship.scaleX - 0.05, ship.scaleY - 0.05);
-  } else if (keyUp.isDown) {
-    ship.setScale(ship.scaleX + 0.05, ship.scaleY + 0.05);
-  }
-
+  updateShipVelocity(ship, keyA, keyD, keyW, keyS, keySpace);
+  updateShipRotation(ship, keyQ, keyE);
+  updateShipScale(ship, keyDown, keyUp);
 }

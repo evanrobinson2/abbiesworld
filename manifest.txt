@@ -1,12 +1,75 @@
+- .git/
+  - COMMIT_EDITMSG
+  - config
+  - description
+  - ...
+  - hooks/
+    - applypatch-msg.sample
+    - commit-msg.sample
+    - fsmonitor-watchman.sample
+    - ...
+  - info/
+    - exclude
+  - logs/
+    - HEAD
+    - refs/
+      - heads/
+        - main
+      - remotes/
+        - origin/
+          - main
+  - objects/
+    - 05/
+      - 414c121211a48ee3330f4dba51f321988a31f2
+    - 11/
+      - 1d98ae7a55e6b86133a564787462f85bc82cff
+    - 21/
+      - 083d6ba929d777b68c1977b4fb47f5369f8c35
+    - 23/
+      - 5b1dd857229cafc370951162b8a57896548611
+    - 35/
+      - f5c66aa2c3dd3c76c3668d74d5a6231cd27cec
+    - 3d/
+      - 39a58b379625e856374bf86672a9d41fc6a360
+    - 3e/
+      - 376ad2faac56969d8bc2e5908e0ade3c5eee1f
+    - 40/
+      - 5c6928a4c1cd65c7d8afe57ae62e12fcc30b8e
+    - 41/
+      - 92a7fb8ece4d3f66b20d982be69013d0cffa14
+    - 51/
+      - d809f808071f575102c7ebe3f5ffeeb5768a22
+    - 6d/
+      - 542f7affde04262939bb786f47d1124fa49293
+    - a2/
+      - 392fb1c4a14b31c45bc00f6d7809206ce5c3bf
+    - ab/
+      - cbac12f9c53db00e73630148f972a07eecb73c
+    - dc/
+      - bcb2dc401501bef83c25f7e270f166c01d685e
+    - f5/
+      - 2178795bf8f6fabcab10a0a88737efc3e1fd5e
+    - fd/
+      - bfec51760b9a49c53d532a9ce939faa6ce936a
+    - info/
+    - pack/
+  - refs/
+    - heads/
+      - main
+    - remotes/
+      - origin/
+        - main
+    - tags/
 - .ipynb_checkpoints/
   - Print File and Directory Hierarchy to File and Console-checkpoint.ipynb
 - assets/
   - audio/
   - images/
-    - worldmap.png
-- index.html
+    - 1.png
+    - ship.png
 - ...
 - scripts/
+  - helpers.js
   - main.js
   - phaser.js
 - styles/
@@ -24,50 +87,159 @@
 <body>
   <div id="gameContainer"></div>
   <button id="endButton">End Game</button>
-  <script src="scripts/main.js"></script>
+  <button id="textPopup">Text Popup</button>
+  <script src="scripts/helpers.js" type="module"></script>
+  <script src="scripts/main.js" type="module"></script>
 </body>
 </html>
 ```
 File "manifest.txt" was deliberately suppressed.
 File "Print File and Directory Hierarchy to File and Console.ipynb" was deliberately suppressed.
+File "COMMIT_EDITMSG" was deliberately suppressed.
+File "config" was deliberately suppressed.
+File "description" was deliberately suppressed.
+File "HEAD" was deliberately suppressed.
+File "index" was deliberately suppressed.
+File "applypatch-msg.sample" was deliberately suppressed.
+File "commit-msg.sample" was deliberately suppressed.
+File "fsmonitor-watchman.sample" was deliberately suppressed.
+File "post-update.sample" was deliberately suppressed.
+File "pre-applypatch.sample" was deliberately suppressed.
+File "pre-commit.sample" was deliberately suppressed.
+File "pre-merge-commit.sample" was deliberately suppressed.
+File "pre-push.sample" was deliberately suppressed.
+File "pre-rebase.sample" was deliberately suppressed.
+File "pre-receive.sample" was deliberately suppressed.
+File "prepare-commit-msg.sample" was deliberately suppressed.
+File "push-to-checkout.sample" was deliberately suppressed.
+File "update.sample" was deliberately suppressed.
+File "exclude" was deliberately suppressed.
+File "HEAD" was deliberately suppressed.
+File "main" was deliberately suppressed.
+File "main" was deliberately suppressed.
+File "414c121211a48ee3330f4dba51f321988a31f2" was deliberately suppressed.
+File "1d98ae7a55e6b86133a564787462f85bc82cff" was deliberately suppressed.
+File "083d6ba929d777b68c1977b4fb47f5369f8c35" was deliberately suppressed.
+File "5b1dd857229cafc370951162b8a57896548611" was deliberately suppressed.
+File "f5c66aa2c3dd3c76c3668d74d5a6231cd27cec" was deliberately suppressed.
+File "39a58b379625e856374bf86672a9d41fc6a360" was deliberately suppressed.
+File "376ad2faac56969d8bc2e5908e0ade3c5eee1f" was deliberately suppressed.
+File "5c6928a4c1cd65c7d8afe57ae62e12fcc30b8e" was deliberately suppressed.
+File "92a7fb8ece4d3f66b20d982be69013d0cffa14" was deliberately suppressed.
+File "d809f808071f575102c7ebe3f5ffeeb5768a22" was deliberately suppressed.
+File "542f7affde04262939bb786f47d1124fa49293" was deliberately suppressed.
+File "392fb1c4a14b31c45bc00f6d7809206ce5c3bf" was deliberately suppressed.
+File "cbac12f9c53db00e73630148f972a07eecb73c" was deliberately suppressed.
+File "bcb2dc401501bef83c25f7e270f166c01d685e" was deliberately suppressed.
+File "2178795bf8f6fabcab10a0a88737efc3e1fd5e" was deliberately suppressed.
+File "bfec51760b9a49c53d532a9ce939faa6ce936a" was deliberately suppressed.
+File "main" was deliberately suppressed.
+File "main" was deliberately suppressed.
 File "Print File and Directory Hierarchy to File and Console-checkpoint.ipynb" was deliberately suppressed.
-File "worldmap.png" was deliberately suppressed.
+File "1.png" was deliberately suppressed.
+File "ship.png" was deliberately suppressed.
 ```js
-// main.js
+export function updateShipVelocity(ship, keyA, keyD, keyS, keyW, keySpace) {
+    if (keyA.isDown) {
+      ship.body.velocity.x -= 1;
+    } else if (keyD.isDown) {
+      ship.body.velocity.x += 1;
+    }
+  
+    if (keyS.isDown) {
+      ship.body.velocity.y += 1;
+    } else if (keyW.isDown) {
+      ship.body.velocity.y -= 1;
+    }
+  
+    if (keySpace.isDown) {
+      ship.body.velocity.x -= 1;
+      if (ship.body.velocity.x < 0) ship.body.velocity.x = 0;
+      ship.body.velocity.y -= 1;
+      if (ship.body.velocity.y < 0) ship.body.velocity.y = 0;
+    }
+  }
+  
+export function updateShipRotation(ship, keyQ, keyE) {
+    if (keyQ.isDown) {
+        ship.rotation -= Phaser.Math.DegToRad(1.5);
+    } else if (keyE.isDown) {
+        ship.rotation += Phaser.Math.DegToRad(1.5);
+    }
+}
+
+export function updateShipScale(ship, keyDown, keyUp) {
+    if (keyDown.isDown) {
+        ship.setScale(ship.scaleX - 0.05, ship.scaleY - 0.05);
+    } else if (keyUp.isDown) {
+        ship.setScale(ship.scaleX + 0.05, ship.scaleY + 0.05);
+    }
+}
+```
+```js
+import { updateShipVelocity, updateShipRotation, updateShipScale } from './helpers.js';
 
 const config = {
   type: Phaser.AUTO,
   width: 1920,
   height: 1080,
   parent: 'gameContainer',
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 0 },
+      debug: false,
+    },
+  },
   scene: {
     preload: preload,
-    create: create
-  }
+    create: create,
+    update: update,
+  },
 };
 
 const game = new Phaser.Game(config);
+let ship;
+let cursors;
+let keyA;
+let keyD;
+let keyS;
+let keyW;
+let keySpace;
+let keyQ;
+let keyE;
+let keyDown;
+let keyUp;
 
 function preload() {
-  this.load.image('worldmap', 'assets/images/worldmap.png');
+  this.load.image('worldmap', 'assets/images/1.png');
+  this.load.image('ship', 'assets/images/ship.png');
 }
 
 function create() {
-  const helloText = this.add.text(
-    config.width / 2,
-    config.height / 2,
-    'Hello World',
-    { fontSize: '32px', fill: '#000', align: 'center' }
-  );
-  helloText.setOrigin(0.5);
+  const worldMap = this.add.image(config.width / 2, config.height / 2, 'worldmap')
+    .setOrigin(0.5)
+    .setDepth(0);
 
-  const endButton = document.getElementById('endButton');
-  endButton.addEventListener('click', function() {
-    game.destroy();
-  });
+  ship = this.physics.add.sprite(900, 500, 'ship');
+  ship.setScale(0.35);
 
-  const worldMap = this.add.image(config.width / 2, config.height / 2, 'worldmap');    
-  worldMap.setOrigin(0.5);
+  cursors = this.input.keyboard.createCursorKeys();
+  keyA = this.input.keyboard.addKey('A');
+  keyD = this.input.keyboard.addKey('D');
+  keyS = this.input.keyboard.addKey('S');
+  keyW = this.input.keyboard.addKey('W');
+  keySpace = this.input.keyboard.addKey('SPACE');
+  keyQ = this.input.keyboard.addKey('Q');
+  keyE = this.input.keyboard.addKey('E');
+  keyDown = this.input.keyboard.addKey('DOWN');
+  keyUp = this.input.keyboard.addKey('UP');
+}
+
+function update() {
+  updateShipVelocity(ship, keyA, keyD, keyS, keyW, keySpace);
+  updateShipRotation(ship, keyQ, keyE);
+  updateShipScale(ship, keyDown, keyUp);
 }
 ```
 File "phaser.js" was deliberately suppressed.
@@ -96,5 +268,23 @@ body {
     color: #fff;
     border: none;
     cursor: pointer;
+  }
+
+  #textPopup {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #ff0000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .button-container {
+    display: flex;
+  }
+  
+  .button-container button {
+    margin-right: 10px;
   }
 ```
