@@ -19,14 +19,20 @@
         - origin/
           - main
   - objects/
+    - 00/
+      - ff4056cda1d4a941ecffcd638640719cdff2c6
     - 05/
       - 414c121211a48ee3330f4dba51f321988a31f2
     - 11/
       - 1d98ae7a55e6b86133a564787462f85bc82cff
+    - 13/
+      - ff13f58923df2a591635f7cae33a077f20bf69
     - 21/
       - 083d6ba929d777b68c1977b4fb47f5369f8c35
     - 23/
       - 5b1dd857229cafc370951162b8a57896548611
+    - 2c/
+      - c1ec4a0629c9243b06b09e08a50d27e6febbd8
     - 35/
       - f5c66aa2c3dd3c76c3668d74d5a6231cd27cec
     - 3d/
@@ -36,21 +42,29 @@
     - 40/
       - 5c6928a4c1cd65c7d8afe57ae62e12fcc30b8e
     - 41/
+      - 2822c14b104d253b6518c7371bc2ce8280b3df
       - 92a7fb8ece4d3f66b20d982be69013d0cffa14
     - 51/
       - d809f808071f575102c7ebe3f5ffeeb5768a22
     - 6d/
       - 542f7affde04262939bb786f47d1124fa49293
+    - 77/
+      - 8253661966c0122ffb86bc1080bbec8df06855
+    - 8f/
+      - bea68d9fe0ee29a8aaf486d99cf75cf6baf614
     - a2/
       - 392fb1c4a14b31c45bc00f6d7809206ce5c3bf
     - ab/
       - cbac12f9c53db00e73630148f972a07eecb73c
+    - cc/
+      - b0763ffdda2a484c8c4f674e909d20007615b0
     - dc/
       - bcb2dc401501bef83c25f7e270f166c01d685e
     - f5/
       - 2178795bf8f6fabcab10a0a88737efc3e1fd5e
     - fd/
       - bfec51760b9a49c53d532a9ce939faa6ce936a
+      - ebfff2ab1fbb41b2b069265aa8cdf409e460fc
     - info/
     - pack/
   - refs/
@@ -64,9 +78,14 @@
   - Print File and Directory Hierarchy to File and Console-checkpoint.ipynb
 - assets/
   - audio/
+  - concept art/
+    - CarpetShark_cartoon_puffy_pink_clouds_sprite_sheet_vapor_trails_d6363de1-b7df-4047-bf9f-753d6dad71f2.png
+    - CarpetShark_cartoon_star_sprite_sheet_many_different_colors_cut_34cfeec6-bbca-40e3-a7f2-198440c53429.png
   - images/
     - 1.png
-    - ship.png
+    - cloud1.png
+    - cloud2.png
+    - ...
 - ...
 - scripts/
   - helpers.js
@@ -117,42 +136,69 @@ File "exclude" was deliberately suppressed.
 File "HEAD" was deliberately suppressed.
 File "main" was deliberately suppressed.
 File "main" was deliberately suppressed.
+File "ff4056cda1d4a941ecffcd638640719cdff2c6" was deliberately suppressed.
 File "414c121211a48ee3330f4dba51f321988a31f2" was deliberately suppressed.
 File "1d98ae7a55e6b86133a564787462f85bc82cff" was deliberately suppressed.
+File "ff13f58923df2a591635f7cae33a077f20bf69" was deliberately suppressed.
 File "083d6ba929d777b68c1977b4fb47f5369f8c35" was deliberately suppressed.
 File "5b1dd857229cafc370951162b8a57896548611" was deliberately suppressed.
+File "c1ec4a0629c9243b06b09e08a50d27e6febbd8" was deliberately suppressed.
 File "f5c66aa2c3dd3c76c3668d74d5a6231cd27cec" was deliberately suppressed.
 File "39a58b379625e856374bf86672a9d41fc6a360" was deliberately suppressed.
 File "376ad2faac56969d8bc2e5908e0ade3c5eee1f" was deliberately suppressed.
 File "5c6928a4c1cd65c7d8afe57ae62e12fcc30b8e" was deliberately suppressed.
+File "2822c14b104d253b6518c7371bc2ce8280b3df" was deliberately suppressed.
 File "92a7fb8ece4d3f66b20d982be69013d0cffa14" was deliberately suppressed.
 File "d809f808071f575102c7ebe3f5ffeeb5768a22" was deliberately suppressed.
 File "542f7affde04262939bb786f47d1124fa49293" was deliberately suppressed.
+File "8253661966c0122ffb86bc1080bbec8df06855" was deliberately suppressed.
+File "bea68d9fe0ee29a8aaf486d99cf75cf6baf614" was deliberately suppressed.
 File "392fb1c4a14b31c45bc00f6d7809206ce5c3bf" was deliberately suppressed.
 File "cbac12f9c53db00e73630148f972a07eecb73c" was deliberately suppressed.
+File "b0763ffdda2a484c8c4f674e909d20007615b0" was deliberately suppressed.
 File "bcb2dc401501bef83c25f7e270f166c01d685e" was deliberately suppressed.
 File "2178795bf8f6fabcab10a0a88737efc3e1fd5e" was deliberately suppressed.
 File "bfec51760b9a49c53d532a9ce939faa6ce936a" was deliberately suppressed.
+File "ebfff2ab1fbb41b2b069265aa8cdf409e460fc" was deliberately suppressed.
 File "main" was deliberately suppressed.
 File "main" was deliberately suppressed.
 File "Print File and Directory Hierarchy to File and Console-checkpoint.ipynb" was deliberately suppressed.
+File "CarpetShark_cartoon_puffy_pink_clouds_sprite_sheet_vapor_trails_d6363de1-b7df-4047-bf9f-753d6dad71f2.png" was deliberately suppressed.
+File "CarpetShark_cartoon_star_sprite_sheet_many_different_colors_cut_34cfeec6-bbca-40e3-a7f2-198440c53429.png" was deliberately suppressed.
 File "1.png" was deliberately suppressed.
+File "cloud1.png" was deliberately suppressed.
+File "cloud2.png" was deliberately suppressed.
+File "cloud3.png" was deliberately suppressed.
+File "cloud4.png" was deliberately suppressed.
+File "exhaust.png" was deliberately suppressed.
+File "ship - Copy.png" was deliberately suppressed.
 File "ship.png" was deliberately suppressed.
 ```js
-export function updateShipVelocity(ship, keyA, keyD, keyS, keyW, keySpace) {
+export function updateShipVelocity(ship, keyA, keyD, keyW, keyS, keySpace) {
     if (keyA.isDown) {
-      ship.body.velocity.x -= 1;
+      // Rotate the ship counter-clockwise by 15 degrees per update
+      ship.rotation -= Phaser.Math.DegToRad(1.5);
     } else if (keyD.isDown) {
-      ship.body.velocity.x += 1;
+      // Rotate the ship clockwise by 15 degrees per update
+      ship.rotation += Phaser.Math.DegToRad(1.5);
     }
   
-    if (keyS.isDown) {
-      ship.body.velocity.y += 1;
-    } else if (keyW.isDown) {
-      ship.body.velocity.y -= 1;
+    if (keyW.isDown) {
+      // Calculate the velocity vector based on the ship's rotation
+      const velocityX = Math.cos(ship.rotation - Phaser.Math.DegToRad(25));
+      const velocityY = Math.sin(ship.rotation - Phaser.Math.DegToRad(25));
+      ship.body.velocity.x += velocityX;
+      ship.body.velocity.y += velocityY;
+    } else if (keyS.isDown) {
+      // Calculate the velocity vector based on the ship's rotation
+      const velocityX = Math.cos(ship.rotation - Phaser.Math.DegToRad(25));
+      const velocityY = Math.sin(ship.rotation - Phaser.Math.DegToRad(5));
+      ship.body.velocity.x -= velocityX;
+      ship.body.velocity.y -= velocityY;
     }
   
     if (keySpace.isDown) {
+      // Reduce velocity by 5 units per update while spacebar is held down
       ship.body.velocity.x -= 1;
       if (ship.body.velocity.x < 0) ship.body.velocity.x = 0;
       ship.body.velocity.y -= 1;
@@ -169,12 +215,14 @@ export function updateShipRotation(ship, keyQ, keyE) {
 }
 
 export function updateShipScale(ship, keyDown, keyUp) {
+    const scaleFactor = 0.01; // Percentage scale factor
+  
     if (keyDown.isDown) {
-        ship.setScale(ship.scaleX - 0.05, ship.scaleY - 0.05);
+      ship.setScale(ship.scaleX * (1 - scaleFactor), ship.scaleY * (1 - scaleFactor));
     } else if (keyUp.isDown) {
-        ship.setScale(ship.scaleX + 0.05, ship.scaleY + 0.05);
+      ship.setScale(ship.scaleX * (1 + scaleFactor), ship.scaleY * (1 + scaleFactor));
     }
-}
+  }
 ```
 ```js
 import { updateShipVelocity, updateShipRotation, updateShipScale } from './helpers.js';
@@ -210,10 +258,33 @@ let keyQ;
 let keyE;
 let keyDown;
 let keyUp;
+let cloudGroup; // Declare cloudGroup as a global variable
+
+
+const spriteWidth = 146;
+const spriteHeight = 146;
+const numFrames = 49;
+const numColumns = 7;
+
+
+
 
 function preload() {
   this.load.image('worldmap', 'assets/images/1.png');
   this.load.image('ship', 'assets/images/ship.png');
+  this.load.image('cloud1', 'assets/images/cloud1.png');
+  this.load.image('cloud2', 'assets/images/cloud2.png');
+  this.load.image('cloud3', 'assets/images/cloud3.png');
+  this.load.image('cloud4', 'assets/images/cloud4.png');
+
+  this.load.spritesheet('exhaust', 'assets/images/exhaust.png', {
+    frameWidth: spriteWidth,
+    frameHeight: spriteHeight,
+    startFrame: 0,
+    endFrame: numFrames - 1,
+    margin: 0,
+    spacing: 0
+  });
 }
 
 function create() {
@@ -223,6 +294,7 @@ function create() {
 
   ship = this.physics.add.sprite(900, 500, 'ship');
   ship.setScale(0.35);
+  ship.setDepth(1);
 
   cursors = this.input.keyboard.createCursorKeys();
   keyA = this.input.keyboard.addKey('A');
@@ -234,12 +306,70 @@ function create() {
   keyE = this.input.keyboard.addKey('E');
   keyDown = this.input.keyboard.addKey('DOWN');
   keyUp = this.input.keyboard.addKey('UP');
+
+  const cloudImages = ['cloud1', 'cloud2', 'cloud3', 'cloud4']; // Replace with your cloud image names
+  const totalClouds = 8; // Adjust the number of clouds as desired
+
+  cloudGroup = createFloatingClouds(this, cloudImages, totalClouds);
+
+  const sprites = this.anims.generateFrameNames('exhaust', {
+    start: 0,
+    end: numFrames - 1,
+    zeroPad: 0,
+    prefix: '',
+    suffix: ''
+  });
+
+  // Create sprites using the frames
+  sprites.forEach((sprite, index) => {
+    const x = (index % numColumns) * spriteWidth;
+    const y = Math.floor(index / numColumns) * spriteHeight;
+
+    const exhaustSprite = this.add.sprite(x, y, 'exhaust', sprite.frame);    
+    exhaustSprite.setVisible(false);
+  });
 }
 
 function update() {
   updateShipVelocity(ship, keyA, keyD, keyS, keyW, keySpace);
   updateShipRotation(ship, keyQ, keyE);
   updateShipScale(ship, keyDown, keyUp);
+
+  // Iterate through each cloud in the cloud group
+  cloudGroup.getChildren().forEach(cloud => {
+    // Apply gentle horizontal movement
+    cloud.x += Math.sin(cloud.y / 100) * 0.5; // Adjust the 0.5 value to control the horizontal movement speed
+
+    // Wrap the clouds when they go off-screen
+    if (cloud.x > config.width + cloud.displayWidth) {
+      cloud.x = -cloud.displayWidth;
+    } else if (cloud.x < -cloud.displayWidth) {
+      cloud.x = config.width + cloud.displayWidth;
+    }
+  });
+}
+
+export function createFloatingClouds(scene, cloudImages, totalClouds) {
+  const cloudGroup = scene.physics.add.group(); // Create a group to hold the clouds
+
+  // Generate the specified number of clouds
+  for (let i = 0; i < totalClouds; i++) {
+    const cloudImage = Phaser.Utils.Array.GetRandom(cloudImages); // Get a random cloud image
+    const x = Phaser.Math.Between(0, scene.sys.game.config.width); // Random X position
+    const y = Phaser.Math.Between(0, scene.sys.game.config.height); // Random Y position
+    const scale = Phaser.Math.FloatBetween(0.5, 1.5); // Random scale factor (between 0.5 and 1.5)
+    const alpha = Phaser.Math.FloatBetween(0.2, 0.8); // Random transparency (between 0.2 and 0.8)
+
+    const cloud = scene.add.image(x, y, cloudImage)
+      .setScale(scale)
+      .setAlpha(alpha)
+      .setDepth(4); // Set the cloud's depth (above the background image)
+
+    // Add the cloud to the physics group
+    cloudGroup.add(cloud);
+  }
+
+  return cloudGroup; // Return the cloud group for further manipulation if needed
 }
 ```
 File "phaser.js" was deliberately suppressed.
