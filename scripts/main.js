@@ -19,6 +19,7 @@ const config = {
   },
 };
 
+
 const game = new Phaser.Game(config);
 let ship;
 let cursors;
@@ -31,8 +32,8 @@ let keyQ;
 let keyE;
 let keyDown;
 let keyUp;
-let cloudGroup; // Declare cloudGroup as a global variable
-
+let cloudGroup;
+let particles;
 
 const spriteWidth = 146;
 const spriteHeight = 146;
@@ -92,7 +93,7 @@ function create() {
     prefix: '',
     suffix: ''
   });
-
+  console.log(sprites);
   // Create sprites using the frames
   sprites.forEach((sprite, index) => {
     const x = (index % numColumns) * spriteWidth;
@@ -100,13 +101,52 @@ function create() {
 
     const exhaustSprite = this.add.sprite(x, y, 'exhaust', sprite.frame);    
     exhaustSprite.setVisible(false);
+  });  
+  
+  const frames = [];
+
+  // Populate the frames array using a loop
+  for (let i = 0; i < 49; i++) {
+    frames.push(i);
+  }
+  
+  particles = this.add.particles(80, -40, 'exhaust', {
+    angle: { min: -30, max: 30, random: true},
+    speed: { min: 100, max: 250, random: true },
+    frequency: 100,
+    scale: { start: 0.5, end: 0, random: true },
+    blendMode: 'NORMAL',
+    active: true,
+    frame: frames 
   });
+  
+
+  particles.startFollow(ship);
+
+  // // Add the debug text overlay
+  // const debugText = this.add.text(10, 10, '', { fontFamily: 'Arial', fontSize: 16, color: '#ffffff' });
+  // debugText.setScrollFactor(0); // Set the text to stay in place while scrolling
+  
+  // // Update the debug text every frame
+  // this.events.on('postupdate', () => {
+  //   if (particles.emitter) {
+  //     debugText.setText(`Ship Position: ${ship.x.toFixed(2)}, ${ship.y.toFixed(2)}\nShip Angle: ${ship.rotation.toFixed(2)}\nParticle Position: ${particles.emitter.x.toFixed(2)}, ${particles.emitter.y.toFixed(2)}\nParticle Angle: ${particles.emitter.angle.toFixed(2)}`);
+  //   }
+  // });
+
 }
 
 function update() {
   updateShipVelocity(ship, keyA, keyD, keyS, keyW, keySpace);
   updateShipRotation(ship, keyQ, keyE);
   updateShipScale(ship, keyDown, keyUp);
+
+  // const emitterOffset = 80; // Adjust this value to control the emitter position relative to the ship
+  const emitterAngleOffset = 180; // Adjust this value to control the emitter angle offset relative to the ship
+
+  // // Update the emitter position and angle based on the ship's position and rotation
+  // particles.setPosition(ship.x + emitterOffset * Math.cos(ship.rotation), ship.y + emitterOffset * Math.sin(ship.rotation));
+  // particles.setAngle(ship.rotation * Phaser.Math.RAD_TO_DEG + emitterAngleOffset);
 
   // Iterate through each cloud in the cloud group
   cloudGroup.getChildren().forEach(cloud => {
@@ -121,6 +161,7 @@ function update() {
     }
   });
 }
+
 
 export function createFloatingClouds(scene, cloudImages, totalClouds) {
   const cloudGroup = scene.physics.add.group(); // Create a group to hold the clouds
