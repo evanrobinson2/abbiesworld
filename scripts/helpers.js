@@ -9,16 +9,16 @@ export function updateShipVelocity(ship, keyA, keyD, keyW, keyS, keySpace) {
   
     if (keyW.isDown) {
       // Calculate the velocity vector based on the ship's rotation
-      const velocityX = Math.cos(ship.rotation - Phaser.Math.DegToRad(25));
-      const velocityY = Math.sin(ship.rotation - Phaser.Math.DegToRad(25));
-      ship.body.velocity.x += velocityX;
-      ship.body.velocity.y += velocityY;
-    } else if (keyS.isDown) {
-      // Calculate the velocity vector based on the ship's rotation
-      const velocityX = Math.cos(ship.rotation - Phaser.Math.DegToRad(25));
-      const velocityY = Math.sin(ship.rotation - Phaser.Math.DegToRad(5));
+      const velocityX = Math.cos(ship.rotation - Phaser.Math.DegToRad(-90));
+      const velocityY = Math.sin(ship.rotation - Phaser.Math.DegToRad(-90));
       ship.body.velocity.x -= velocityX;
       ship.body.velocity.y -= velocityY;
+    } else if (keyS.isDown) {
+     0 // Calculate the velocity vector based on the ship's rotation
+      const velocityX = Math.cos(ship.rotation - Phaser.Math.DegToRad(-90));
+      const velocityY = Math.sin(ship.rotation - Phaser.Math.DegToRad(-90));
+      ship.body.velocity.x += velocityX;
+      ship.body.velocity.y += velocityY;
     }
   
     if (keySpace.isDown) {

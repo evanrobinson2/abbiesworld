@@ -2,8 +2,8 @@ import { updateShipVelocity, updateShipRotation, updateShipScale } from './helpe
 
 const config = {
   type: Phaser.AUTO,
-  width: 1920,
-  height: 1080,
+  width:  1232,
+  height: 928,
   parent: 'gameContainer',
   physics: {
     default: 'arcade',
@@ -22,6 +22,7 @@ const config = {
 
 const game = new Phaser.Game(config);
 let ship;
+const MAX_SPEED = 1000;  
 let cursors;
 let keyA;
 let keyD;
@@ -35,17 +36,17 @@ let keyUp;
 let cloudGroup;
 let particles;
 
-const spriteWidth = 146;
-const spriteHeight = 146;
-const numFrames = 49;
-const numColumns = 7;
+const spriteWidth = 1024/9;
+const spriteHeight = 1024/8;
+const numFrames = 9*8;
+const numColumns = 9;
 
 
 
 
 function preload() {
-  this.load.image('worldmap', 'assets/images/1.png');
-  this.load.image('ship', 'assets/images/ship.png');
+  this.load.image('worldmap', 'assets/images/abbiesworld.png');
+  this.load.image('ship', 'assets/images/abbie.png');
   this.load.image('cloud1', 'assets/images/cloud1.png');
   this.load.image('cloud2', 'assets/images/cloud2.png');
   this.load.image('cloud3', 'assets/images/cloud3.png');
@@ -62,13 +63,17 @@ function preload() {
 }
 
 function create() {
-  const worldMap = this.add.image(config.width / 2, config.height / 2, 'worldmap')
-    .setOrigin(0.5)
-    .setDepth(0);
+  const worldMap = this.add.image(0, 0, 'worldmap')
+  .setOrigin(0)
+  .setDepth(0)
+  .setDisplaySize(config.width, config.height); // scale the image to fit the viewport
 
-  ship = this.physics.add.sprite(900, 500, 'ship');
+  this.cameras.main.setZoom(1.0);
+
+  ship = this.physics.add.sprite(900 , 900, 'ship');
   ship.setScale(0.35);
   ship.setDepth(1);
+  ship.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
 
   cursors = this.input.keyboard.createCursorKeys();
   keyA = this.input.keyboard.addKey('A');
@@ -93,7 +98,7 @@ function create() {
     prefix: '',
     suffix: ''
   });
-  console.log(sprites);
+
   // Create sprites using the frames
   sprites.forEach((sprite, index) => {
     const x = (index % numColumns) * spriteWidth;
@@ -122,18 +127,7 @@ function create() {
   
 
   particles.startFollow(ship);
-
-  // // Add the debug text overlay
-  // const debugText = this.add.text(10, 10, '', { fontFamily: 'Arial', fontSize: 16, color: '#ffffff' });
-  // debugText.setScrollFactor(0); // Set the text to stay in place while scrolling
-  
-  // // Update the debug text every frame
-  // this.events.on('postupdate', () => {
-  //   if (particles.emitter) {
-  //     debugText.setText(`Ship Position: ${ship.x.toFixed(2)}, ${ship.y.toFixed(2)}\nShip Angle: ${ship.rotation.toFixed(2)}\nParticle Position: ${particles.emitter.x.toFixed(2)}, ${particles.emitter.y.toFixed(2)}\nParticle Angle: ${particles.emitter.angle.toFixed(2)}`);
-  //   }
-  // });
-
+  console.log(particles.type);
 }
 
 function update() {
@@ -141,12 +135,8 @@ function update() {
   updateShipRotation(ship, keyQ, keyE);
   updateShipScale(ship, keyDown, keyUp);
 
-  // const emitterOffset = 80; // Adjust this value to control the emitter position relative to the ship
+  const emitterOffset = 80; // Adjust this value to control the emitter position relative to the ship
   const emitterAngleOffset = 180; // Adjust this value to control the emitter angle offset relative to the ship
-
-  // // Update the emitter position and angle based on the ship's position and rotation
-  // particles.setPosition(ship.x + emitterOffset * Math.cos(ship.rotation), ship.y + emitterOffset * Math.sin(ship.rotation));
-  // particles.setAngle(ship.rotation * Phaser.Math.RAD_TO_DEG + emitterAngleOffset);
 
   // Iterate through each cloud in the cloud group
   cloudGroup.getChildren().forEach(cloud => {
@@ -160,6 +150,20 @@ function update() {
       cloud.x = config.width + cloud.displayWidth;
     }
   });
+
+  // Wrap the ship when it goes off-screen  
+  if (ship.x > config.width) {
+    ship.x = 0;
+  } else if (ship.x < 0) {
+    ship.x = config.width;
+  }
+  
+  if (ship.y > config.height) {
+    ship.y = 0;
+  } else if (ship.y < 0) {
+    ship.y = config.height;
+  }
+
 }
 
 
