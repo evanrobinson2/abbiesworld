@@ -1,5 +1,3 @@
-import { updateShipVelocity, updateShipRotation, updateShipScale } from './helpers.js';
-
 const config = {
   type: Phaser.AUTO,
   width:  1232,
@@ -21,18 +19,14 @@ const config = {
 
 
 const game = new Phaser.Game(config);
-let ship;
+let player;
+let mrfrog;
 const MAX_SPEED = 1000;  
 let cursors;
 let keyA;
 let keyD;
 let keyS;
 let keyW;
-let keySpace;
-let keyQ;
-let keyE;
-let keyDown;
-let keyUp;
 let cloudGroup;
 let particles;
 
@@ -46,7 +40,8 @@ const numColumns = 9;
 
 function preload() {
   this.load.image('worldmap', 'assets/images/abbiesworld.png');
-  this.load.image('ship', 'assets/images/abbie.png');
+  this.load.image('player', 'assets/images/abbie.png');
+  this.load.image('mrfrog', 'assets/images/mrfrog.png');
   this.load.image('cloud1', 'assets/images/cloud1.png');
   this.load.image('cloud2', 'assets/images/cloud2.png');
   this.load.image('cloud3', 'assets/images/cloud3.png');
@@ -70,22 +65,23 @@ function create() {
 
   this.cameras.main.setZoom(1.0);
 
-  ship = this.physics.add.sprite(900 , 900, 'ship');
-  ship.setScale(0.35);
-  ship.setDepth(1);
-  ship.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
+  player = this.physics.add.sprite(900 , 900, 'player');
+  player.setScale(0.35);
+  player.setDepth(1);
+  player.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
+
+  mrfrog = this.physics.add.sprite(1000 , 200, 'mrfrog');
+  mrfrog.setScale(0.10);
+  mrfrog.setDepth(1);
+  mrfrog.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
+
 
   cursors = this.input.keyboard.createCursorKeys();
   keyA = this.input.keyboard.addKey('A');
   keyD = this.input.keyboard.addKey('D');
   keyS = this.input.keyboard.addKey('S');
   keyW = this.input.keyboard.addKey('W');
-  keySpace = this.input.keyboard.addKey('SPACE');
-  keyQ = this.input.keyboard.addKey('Q');
-  keyE = this.input.keyboard.addKey('E');
-  keyDown = this.input.keyboard.addKey('DOWN');
-  keyUp = this.input.keyboard.addKey('UP');
-
+  
   const cloudImages = ['cloud1', 'cloud2', 'cloud3', 'cloud4']; // Replace with your cloud image names
   const totalClouds = 8; // Adjust the number of clouds as desired
 
@@ -115,53 +111,91 @@ function create() {
     frames.push(i);
   }
   
-  particles = this.add.particles(80, -40, 'exhaust', {
-    angle: { min: -30, max: 30, random: true},
+  particles = this.add.particles(0, 0, 'exhaust', {
+    angle: { min: 0, max: 360, random: true},
     speed: { min: 100, max: 250, random: true },
     frequency: 100,
-    scale: { start: 0.5, end: 0, random: true },
+    scale: { start: 1, end: 0.25, random: true },
     blendMode: 'NORMAL',
     active: true,
     frame: frames 
   });
   
 
-  particles.startFollow(ship);
+  particles.startFollow(player);
   console.log(particles.type);
 }
 
 function update() {
-  updateShipVelocity(ship, keyA, keyD, keyS, keyW, keySpace);
-  updateShipRotation(ship, keyQ, keyE);
-  updateShipScale(ship, keyDown, keyUp);
+  const speed = 100; // Set the speed of the player
+  const maxVelocity = 100; // Set the maximum velocity of the player
+  const drag = 0.98; // Set the drag of the player (higher value means faster deceleration)
+  
+  // Calculate the player's velocity based on the pressed keys
+  let velocityX = 0;
+  let velocityY = 0;
+  if (keyW.isDown) {
+    velocityY = -speed;
+  }
+  if (keyS.isDown) {
+    velocityY = speed;
+  }
+  if (keyA.isDown) {
+    velocityX = -speed;
+  }
+  if (keyD.isDown) {
+    velocityX = speed;
+  }
+  
+  // Normalize the velocity vector to ensure the player moves at a constant speed
+  const velocityMagnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+  if (velocityMagnitude > 0) {
+    velocityX /= velocityMagnitude;
+    velocityY /= velocityMagnitude;
+  }
+  
+  // Set the player's velocity to the calculated value
+  player.setVelocityX(velocityX * maxVelocity);
+  player.setVelocityY(velocityY * maxVelocity);
+  
+  // Limit the maximum velocity of the player
+  const currentVelocity = player.body.velocity;
+  const currentSpeed = currentVelocity.length();
+  if (currentSpeed > maxVelocity) {
+    player.setVelocity(currentVelocity.scale(maxVelocity / currentSpeed));
+  }
+  
+  // Apply drag to the player
+  player.setVelocityX(player.body.velocity.x * drag);
+  player.setVelocityY(player.body.velocity.y * drag);
 
-  const emitterOffset = 80; // Adjust this value to control the emitter position relative to the ship
-  const emitterAngleOffset = 180; // Adjust this value to control the emitter angle offset relative to the ship
+  const emitterOffset = 80; // Adjust this value to control the emitter position relative to the player
+  const emitterAngleOffset = 180; // Adjust this value to control the emitter angle offset relative to the player
 
   // Iterate through each cloud in the cloud group
   cloudGroup.getChildren().forEach(cloud => {
-    // Apply gentle horizontal movement
-    cloud.x += Math.sin(cloud.y / 100) * 0.5; // Adjust the 0.5 value to control the horizontal movement speed
+  // Apply gentle horizontal movement
+  cloud.x += Math.sin(cloud.y / 100) * 0.5; // Adjust the 0.5 value to control the horizontal movement speed
 
-    // Wrap the clouds when they go off-screen
-    if (cloud.x > config.width + cloud.displayWidth) {
-      cloud.x = -cloud.displayWidth;
-    } else if (cloud.x < -cloud.displayWidth) {
-      cloud.x = config.width + cloud.displayWidth;
-    }
-  });
+  // Wrap the clouds when they go off-screen
+  if (cloud.x > config.width + cloud.displayWidth) {
+    cloud.x = -cloud.displayWidth;
+  } else if (cloud.x < -cloud.displayWidth) {
+    cloud.x = config.width + cloud.displayWidth;
+  }
+});
 
-  // Wrap the ship when it goes off-screen  
-  if (ship.x > config.width) {
-    ship.x = 0;
-  } else if (ship.x < 0) {
-    ship.x = config.width;
+  // Wrap the player when it goes off-screen  
+  if (player.x > config.width) {
+    player.x = 0;
+  } else if (player.x < 0) {
+    player.x = config.width;
   }
   
-  if (ship.y > config.height) {
-    ship.y = 0;
-  } else if (ship.y < 0) {
-    ship.y = config.height;
+  if (player.y > config.height) {
+    player.y = 0;
+  } else if (player.y < 0) {
+    player.y = config.height;
   }
 
 }
@@ -176,7 +210,7 @@ export function createFloatingClouds(scene, cloudImages, totalClouds) {
     const x = Phaser.Math.Between(0, scene.sys.game.config.width); // Random X position
     const y = Phaser.Math.Between(0, scene.sys.game.config.height); // Random Y position
     const scale = Phaser.Math.FloatBetween(0.5, 1.5); // Random scale factor (between 0.5 and 1.5)
-    const alpha = Phaser.Math.FloatBetween(0.2, 0.8); // Random transparency (between 0.2 and 0.8)
+    const alpha = Phaser.Math.FloatBetween(0.1, 0.6); // Random transparency (between 0.2 and 0.8)
 
     const cloud = scene.add.image(x, y, cloudImage)
       .setScale(scale)
