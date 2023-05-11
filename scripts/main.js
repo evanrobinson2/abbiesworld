@@ -32,7 +32,8 @@ let keyShift;
 let keySpace;
 let cloudGroup;
 let particles;
-let miniGameText;
+let mrFrogText;
+let mrsRabbitText;
 
 const spriteWidth = 1024/9;
 const spriteHeight = 1024/8;
@@ -132,7 +133,9 @@ function create() {
     frame: frames 
   });
   
-  miniGameText = this.add.text(config.width / 2, config.height / 2, "", {
+
+  
+  mrFrogText = this.add.text(config.width / 2, config.height / 2, "", {
     fontSize: "32px",
     fill: "#000",
     stroke: "#fff",
@@ -140,9 +143,17 @@ function create() {
     fontStyle: "bold",
     fontFamily: "Arial",
   });
-
-
-  miniGameText.setOrigin(0.5);  
+  mrFrogText.setOrigin(0.5);  
+  
+  mrsRabbitText = this.add.text(config.width / 2, config.height / 2, "", {
+    fontSize: "32px",
+    fill: "#000",
+    stroke: "#fff",
+    strokeThickness: 6,
+    fontStyle: "bold",
+    fontFamily: "Arial",
+  });
+  mrsRabbitText.setOrigin(0.5);  
 
   particles.startFollow(player);
 }
@@ -225,33 +236,32 @@ function update() {
 
   // Check if player is close to mrfrog and display "Mini-Game Available!" if the player is within 100 pixels of Mr. Frog
   const distanceToMrfrog = Phaser.Math.Distance.Between(player.x, player.y, mrfrog.x, mrfrog.y);
+  
   if (distanceToMrfrog < 100) {
-    miniGameText.setText("Press Space to go to Bubble Popper!");
-    miniGameText.setVisible(true);
-
+    mrFrogText.setText("Press Space to go to Balloon Popper!");
+    mrFrogText.setVisible(true);
+    
     // Check if spacebar is down and redirect to bubble popper game if it is
     if (keySpace.isDown) {
       window.location.replace("bubblepopper/index.html");
     }
   } else {
-    miniGameText.setVisible(false);
+    mrFrogText.setVisible(false);
   }
 
   // Check if player is close to mrfrog and display "Mini-Game Available!" if the player is within 100 pixels of Mr. Frog
   const distanceToMrsRabbit = Phaser.Math.Distance.Between(player.x, player.y, mrsrabbit.x, mrsrabbit.y);
   if (distanceToMrsRabbit < 100) {
-    miniGameText.setText("Press Space to go to Jump! Duck!");
-    miniGameText.setVisible(true);
+    mrsRabbitText.setText("Press Space to go to Jump! Duck!");
+    mrsRabbitText.setVisible(true);
 
     // Check if spacebar is down and redirect to bubble popper game if it is
     if (keySpace.isDown) {
       window.location.replace("jumpduck/index.html");
     }
   } else {
-    miniGameText.setVisible(false);
+    mrsRabbitText.setVisible(false);
   }
-
-
 }
 
 
