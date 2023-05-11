@@ -21,14 +21,18 @@ const config = {
 const game = new Phaser.Game(config);
 let player;
 let mrfrog;
+let mrsrabbit;
 const MAX_SPEED = 1000;  
 let cursors;
 let keyA;
 let keyD;
 let keyS;
 let keyW;
+let keyShift;
+let keySpace;
 let cloudGroup;
 let particles;
+let miniGameText;
 
 const spriteWidth = 1024/9;
 const spriteHeight = 1024/8;
@@ -46,7 +50,7 @@ function preload() {
   this.load.image('cloud2', 'assets/images/cloud2.png');
   this.load.image('cloud3', 'assets/images/cloud3.png');
   this.load.image('cloud4', 'assets/images/cloud4.png');
-
+  this.load.image('mrsrabbit', 'assets/images/mrsrabbit.png');
   this.load.spritesheet('exhaust', 'assets/images/exhaust.png', {
     frameWidth: spriteWidth,
     frameHeight: spriteHeight,
@@ -70,6 +74,11 @@ function create() {
   player.setDepth(1);
   player.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
 
+  mrsrabbit = this.physics.add.sprite(300 , 700, 'mrsrabbit');
+  mrsrabbit.setScale(0.25);
+  mrsrabbit.setDepth(1);
+  mrsrabbit.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
+
   mrfrog = this.physics.add.sprite(1000 , 200, 'mrfrog');
   mrfrog.setScale(0.10);
   mrfrog.setDepth(1);
@@ -81,7 +90,9 @@ function create() {
   keyD = this.input.keyboard.addKey('D');
   keyS = this.input.keyboard.addKey('S');
   keyW = this.input.keyboard.addKey('W');
-  
+  keyShift = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT);
+  keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
   const cloudImages = ['cloud1', 'cloud2', 'cloud3', 'cloud4']; // Replace with your cloud image names
   const totalClouds = 8; // Adjust the number of clouds as desired
 
@@ -121,14 +132,25 @@ function create() {
     frame: frames 
   });
   
+  miniGameText = this.add.text(config.width / 2, config.height / 2, "", {
+    fontSize: "32px",
+    fill: "#000",
+    stroke: "#fff",
+    strokeThickness: 6,
+    fontStyle: "bold",
+    fontFamily: "Arial",
+  });
+
+
+  miniGameText.setOrigin(0.5);  
 
   particles.startFollow(player);
-  console.log(particles.type);
 }
 
 function update() {
   const speed = 100; // Set the speed of the player
   const maxVelocity = 100; // Set the maximum velocity of the player
+  const maxVelocityShift = maxVelocity * 2; // Set the maximum velocity of the player when shift is down
   const drag = 0.98; // Set the drag of the player (higher value means faster deceleration)
   
   // Calculate the player's velocity based on the pressed keys
@@ -146,6 +168,9 @@ function update() {
   if (keyD.isDown) {
     velocityX = speed;
   }
+
+  // Check if shift key is down and use the appropriate max velocity
+  const currentMaxVelocity = keyShift.isDown ? maxVelocityShift : maxVelocity;
   
   // Normalize the velocity vector to ensure the player moves at a constant speed
   const velocityMagnitude = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
@@ -155,35 +180,35 @@ function update() {
   }
   
   // Set the player's velocity to the calculated value
-  player.setVelocityX(velocityX * maxVelocity);
-  player.setVelocityY(velocityY * maxVelocity);
-  
-  // Limit the maximum velocity of the player
-  const currentVelocity = player.body.velocity;
-  const currentSpeed = currentVelocity.length();
-  if (currentSpeed > maxVelocity) {
-    player.setVelocity(currentVelocity.scale(maxVelocity / currentSpeed));
-  }
+  player.setVelocityX(velocityX * currentMaxVelocity);
+  player.setVelocityY(velocityY * currentMaxVelocity);
   
   // Apply drag to the player
   player.setVelocityX(player.body.velocity.x * drag);
   player.setVelocityY(player.body.velocity.y * drag);
+
+  // Limit the maximum velocity of the player
+  const currentVelocity = player.body.velocity;
+  const currentSpeed = currentVelocity.length();
+  if (currentSpeed > currentMaxVelocity) {
+    player.setVelocity(currentVelocity.scale(currentMaxVelocity / currentSpeed));
+  }
 
   const emitterOffset = 80; // Adjust this value to control the emitter position relative to the player
   const emitterAngleOffset = 180; // Adjust this value to control the emitter angle offset relative to the player
 
   // Iterate through each cloud in the cloud group
   cloudGroup.getChildren().forEach(cloud => {
-  // Apply gentle horizontal movement
-  cloud.x += Math.sin(cloud.y / 100) * 0.5; // Adjust the 0.5 value to control the horizontal movement speed
+    // Apply gentle horizontal movement
+    cloud.x += Math.sin(cloud.y / 100) * 0.5; // Adjust the 0.5 value to control the horizontal movement speed
 
-  // Wrap the clouds when they go off-screen
-  if (cloud.x > config.width + cloud.displayWidth) {
-    cloud.x = -cloud.displayWidth;
-  } else if (cloud.x < -cloud.displayWidth) {
-    cloud.x = config.width + cloud.displayWidth;
-  }
-});
+    // Wrap the clouds when they go off-screen
+    if (cloud.x > config.width + cloud.displayWidth) {
+      cloud.x = -cloud.displayWidth;
+    } else if (cloud.x < -cloud.displayWidth) {
+      cloud.x = config.width + cloud.displayWidth;
+    }
+  });
 
   // Wrap the player when it goes off-screen  
   if (player.x > config.width) {
@@ -197,6 +222,35 @@ function update() {
   } else if (player.y < 0) {
     player.y = config.height;
   }
+
+  // Check if player is close to mrfrog and display "Mini-Game Available!" if the player is within 100 pixels of Mr. Frog
+  const distanceToMrfrog = Phaser.Math.Distance.Between(player.x, player.y, mrfrog.x, mrfrog.y);
+  if (distanceToMrfrog < 100) {
+    miniGameText.setText("Press Space to go to Bubble Popper!");
+    miniGameText.setVisible(true);
+
+    // Check if spacebar is down and redirect to bubble popper game if it is
+    if (keySpace.isDown) {
+      window.location.replace("bubblepopper/index.html");
+    }
+  } else {
+    miniGameText.setVisible(false);
+  }
+
+  // Check if player is close to mrfrog and display "Mini-Game Available!" if the player is within 100 pixels of Mr. Frog
+  const distanceToMrsRabbit = Phaser.Math.Distance.Between(player.x, player.y, mrsrabbit.x, mrsrabbit.y);
+  if (distanceToMrsRabbit < 100) {
+    miniGameText.setText("Press Space to go to Jump! Duck!");
+    miniGameText.setVisible(true);
+
+    // Check if spacebar is down and redirect to bubble popper game if it is
+    if (keySpace.isDown) {
+      window.location.replace("jumpduck/index.html");
+    }
+  } else {
+    miniGameText.setVisible(false);
+  }
+
 
 }
 

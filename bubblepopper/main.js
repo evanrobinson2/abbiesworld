@@ -4,8 +4,14 @@ var gameHeight = 816;
 var game;
 var timer;
 var score = 0;
+var gameOverText;
 var scoreText;
 var balloonGroup;
+var balloonPopCount = 0;
+var numBalloons = 11;
+let balloonsMoving = new Array(11).fill(1);
+
+let keySpace;
 
 // Configuration object
 var config = {
@@ -28,8 +34,8 @@ var config = {
 
 // Load assets
 function preload() {
-    this.load.image('background', 'assets/images/background.png');
-    for (let i = 1; i <= 11; i++) {
+    this.load.image('background', 'assets/images/background2.png');
+    for (let i = 1; i <= numBalloons; i++) {
       this.load.image(`balloon${i}`, `assets/images/balloon${i}.png`);
       // console.log(`Loading balloon${i} from assets/images/balloon${i}.png`);
     }
@@ -39,7 +45,8 @@ function preload() {
 function create() {
   // Add background
   this.add.image(gameWidth / 2, gameHeight / 2, 'background');
-
+  keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+  
   // Add balloon group
   balloonGroup = this.physics.add.group({
     key: 'balloon1',
@@ -60,6 +67,23 @@ function create() {
     child.setScale(0.50);
   });
 
+  //console.log(balloonGroup.countActive(true));
+ // Check if all balloons are not moving
+  if (balloonGroup.countActive(true) === 0 && score > 0) {
+    console.log('All balloons have stopped moving!');
+    gameOverText = this.add.text(gameWidth / 2, gameHeight / 2, 'Escape to go back', {
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '48px',
+      color: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 6
+    });
+    me
+    this.input.keyboard.on('keydown-ESC', function () {
+    window.location.href = 'index.html';
+    });
+  }
+
   // Add score text
   scoreText = this.add.text(16, 16, 'Score: 0', { 
     fontFamily: 'Arial, sans-serif',
@@ -68,23 +92,46 @@ function create() {
     stroke: '#000000',
     strokeThickness: 6
   });
+
+
+  // Add score text
+  gameOverText = this.add.text(gameWidth/2, gameHeight/2, 'GAME OVER!', { 
+    fontFamily: 'Arial, sans-serif',
+    fontSize: '36px',
+    color: '#ffffff',
+    stroke: '#000000',
+    strokeThickness: 6
+  });
+  gameOverText.setVisible(false);
+
 }
 
 
 // Update game state
 function update() {
   // Pop balloons on click
+  var checkGameOver = 0;
   this.input.on('pointerdown', function (pointer, gameObject) {
-    balloonGroup.children.iterate(function (child) {
+    balloonGroup.children.iterate(function (child, index) {
       if (child.getBounds().contains(pointer.x, pointer.y)) {
         child.setVelocity(0, -200);
         child.setAcceleration(0, 1000);
         score += 1;
         scoreText.setText('Score: ' + score);
-        
+        console.log("balloonPopCount: " + balloonPopCount );
+        balloonsMoving[index] = 0;
       }
     });
   });
+  
+  if (balloonsMoving.every(num => num === 0)) {
+    gameOverText.setVisible(true);
+  }
+  // Check if spacebar is down and redirect to bubble popper game if it is
+  if (keySpace.isDown && balloonsMoving.every(num => num === 0)) {
+      console.log('replacing window');
+      window.location.replace("../index.html");
+  }
 }
 
 // Game over function
