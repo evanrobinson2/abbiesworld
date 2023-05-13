@@ -17,7 +17,6 @@ const config = {
   },
 };
 
-
 const game = new Phaser.Game(config);
 let player;
 let mrfrog;
@@ -240,18 +239,16 @@ function update() {
   // Check if player is close to mrfrog and display "Mini-Game Available!" if the player is within 100 pixels of Mr. Frog
   const distanceToMrsRabbit = Phaser.Math.Distance.Between(player.x, player.y, mrsrabbit.x, mrsrabbit.y);
   if (distanceToMrsRabbit < 100) {
-    miniGameText.setText("Press Space to go to Jump! Duck!");
+    miniGameText.setText("Press Space to go to The Enchanted Forest!");
     miniGameText.setVisible(true);
 
     // Check if spacebar is down and redirect to bubble popper game if it is
     if (keySpace.isDown) {
-      window.location.replace("jumpduck/index.html");
+      window.location.replace("enchantedforest/index.html");
     }
   } else {
     miniGameText.setVisible(false);
   }
-
-
 }
 
 
