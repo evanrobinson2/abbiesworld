@@ -7,7 +7,7 @@ var gameOverText;
 var timerText; // Updated variable name
 var goonGroup;
 var goonPopCount = 0;
-var numgoons = 10;
+var numgoons = 13;
 var numBackgrounds = 3;
 let goonsMoving = new Array(numgoons).fill(1);
 let score; 
