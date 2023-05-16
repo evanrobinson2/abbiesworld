@@ -19,6 +19,7 @@ const config = {
 
 const game = new Phaser.Game(config);
 let player;
+let effect;
 let mrfrog;
 let mrsrabbit;
 const MAX_SPEED = 1000;  
@@ -33,6 +34,16 @@ let cloudGroup;
 let particles;
 let mrFrogText;
 let mrsRabbitText;
+
+// Define the initial values and the range for the pulsating effect
+var minStrength = 2;
+var maxStrength = 8;
+var pulsateSpeed = 0.005; // Adjust the speed of the pulsation
+
+// Variable to keep track of the current pulsation state
+var currentStrength = minStrength;
+var increasing = true;
+
 
 const spriteWidth = 1024/9;
 const spriteHeight = 1024/8;
@@ -83,6 +94,20 @@ function create() {
   mrfrog.setScale(0.10);
   mrfrog.setDepth(1);
   mrfrog.setAngle(0); // Set initial rotation to -30 degrees (clockwise)
+
+  effect = mrfrog.postFX.addGlow(0x00ff00, 4, 0, false);
+  // Define the initial values and the range for the pulsating effect
+  var minStrength = 2;
+  var maxStrength = 8;
+  var pulsateSpeed = 0.005; // Adjust the speed of the pulsation
+
+  // Variable to keep track of the current pulsation state
+  var currentStrength = minStrength;
+  var increasing = true;
+  
+  
+  // Set other properties (if needed)
+  effect.setActive(true);
 
 
   cursors = this.input.keyboard.createCursorKeys();
@@ -261,6 +286,27 @@ function update() {
   } else {
     mrsRabbitText.setVisible(false);
   }
+
+  // Pulsate the glow effect
+  if (increasing) {
+    currentStrength += pulsateSpeed;
+    if (currentStrength >= maxStrength) {
+      currentStrength = maxStrength;
+      increasing = false;
+    }
+  } else {
+    currentStrength -= pulsateSpeed;
+    if (currentStrength <= minStrength) {
+      currentStrength = minStrength;
+      increasing = true;
+    }
+  }
+
+  // Set the properties of the glow effect
+  effect.outerStrength = currentStrength;
+  effect.innerStrength = currentStrength;
+
+
 }
 
 

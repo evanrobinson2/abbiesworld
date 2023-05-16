@@ -214,7 +214,7 @@ const config = {
 
   // Check if player is close to back and display text
   const distanceToBackButton = Phaser.Math.Distance.Between(player.x, player.y, backButton.x, backButton.y);
-  console.log(distanceToBackButton);
+  
   if (distanceToBackButton < 100) {
     backButtonText.setText("Press Space to go to Back Home!");
     backButtonText.setVisible(true);

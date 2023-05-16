@@ -9,6 +9,7 @@ var scoreText;
 var balloonGroup;
 var balloonPopCount = 0;
 var numBalloons = 11;
+var numBackgrounds = 8;
 let balloonsMoving = new Array(11).fill(1);
 
 let keySpace;
@@ -34,17 +35,26 @@ var config = {
 
 // Load assets
 function preload() {
-    this.load.image('background', 'assets/images/background2.png');
     for (let i = 1; i <= numBalloons; i++) {
       this.load.image(`balloon${i}`, `assets/images/balloon${i}.png`);
-      // console.log(`Loading balloon${i} from assets/images/balloon${i}.png`);
     }
+
+    for (let i = 1; i <= numBackgrounds; i++) {
+      this.load.image(`background${i}`, `assets/images/b${i}.png`);
+    }
+
   }
   
 // Initialize game objects
 function create() {
   // Add background
-  this.add.image(gameWidth / 2, gameHeight / 2, 'background');
+  // Randomly select a background number between 1 and numBackgrounds
+  const numBackgrounds = 5; // Replace with the actual number of available background images
+  const randomBackgroundNum = Phaser.Math.Between(1, numBackgrounds);
+
+  // Add the image based on the selected background number
+  this.add.image(gameWidth / 2, gameHeight / 2, `background${randomBackgroundNum}`);
+  
   keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   
   // Add balloon group
