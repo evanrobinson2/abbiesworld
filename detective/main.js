@@ -118,30 +118,27 @@ function create() {
 
 // Update game state
 function update() {
-  // Pop goons on click
   updateTimer();
   var checkGameOver = 0;
+  
   this.input.on('pointerdown', function (pointer, gameObject) {
-    
-    this.cameras.main.shake(100, 0.0025);
     myObjGroup.children.iterate(function (child, index) {
-      if (child.getBounds().contains(pointer.x, pointer.y)) {
-        child.setVelocity(0, -200);
-        child.setAcceleration(0, 1000);
+      if (child.getBounds().contains(pointer.x, pointer.y) && objectsMoving[index] === 1) {
         objectsMoving[index] = 0;
-        child.body.angularVelocity = 0;
+        child.setVisible(false);
+        numObjectsInGame--;
       }
     });
   });
   
-  if (objectsMoving.every(num => num === 0)) {
+  if (objectsMoving.every(num => num === 0) && numObjectsInGame === 0) {
     gameOverText.setVisible(true);
-    playButton.setVisible(true);    
+    playButton.setVisible(true);
   }
-  // Check if spacebar is down and redirect to bubble popper game if it is
+
   if (keySpace.isDown && objectsMoving.every(num => num === 0)) {
-      console.log('replacing window');
-      window.location.replace("../index.html");
+    console.log('replacing window');
+    window.location.replace('../index.html');
   }
 }
 
