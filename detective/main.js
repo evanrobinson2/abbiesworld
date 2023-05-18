@@ -78,30 +78,21 @@ function create() {
   this.add.image(gameWidth / 2, gameHeight / 2, `background${randomBackgroundNum}`);
 
   keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-  
+
   // Add group
-  myObjGroup = this.physics.add.group({
-    key: 'myObject1',
-    repeat: numObjectsAvailable-1,
-    setXY: { x: 0, y: gameHeight+1000, stepX: 150 }
-  });
+  myObjGroup = this.physics.add.group();
 
-  // Set goon physics properties
-  myObjGroup.children.iterate(function (child, index) {
-    // Set goon sprite key dynamically
-    child.setTexture(`myObject${index + 1}`);
-    console.log(`myObject${index + 1}`);
-    child.setBounce(Phaser.Math.FloatBetween(0.4, 0.8), Phaser.Math.FloatBetween(0.4, 0.8));
-    child.body.collideWorldBounds = true;
-    child.body.velocity.x = Phaser.Math.Between(-200, 200);
-    child.body.velocity.y = Phaser.Math.Between(100, 300);
-    child.body.allowGravity = false;
-    child.setScale(0.50);
+  // Randomly position the objects around the room
+  for (let i = 0; i < numObjectsAvailable; i++) {
+    const randomX = Phaser.Math.Between(0, gameWidth);
+    const randomY = Phaser.Math.Between(0, gameHeight);
 
-    // Randomly set spin direction
-    var spinDirection = Phaser.Math.RND.sign();
-    child.body.angularVelocity = Phaser.Math.Between(100, 300) * spinDirection;
-  });
+    const object = myObjGroup.create(randomX, randomY, `myObject${i + 1}`);
+    object.setBounce(Phaser.Math.FloatBetween(0.4, 0.8), Phaser.Math.FloatBetween(0.4, 0.8));
+    object.body.collideWorldBounds = true;
+    object.body.allowGravity = false;
+    object.setScale(0.5);
+  }
 
   // Add timer text
   timerText = this.add.text(16, 16, 'Time: 0.000 s', {
@@ -113,7 +104,7 @@ function create() {
   });
 
   // Add score text
-  gameOverText = this.add.text(gameWidth/2, gameHeight/2, 'GAME OVER!', { 
+  gameOverText = this.add.text(gameWidth / 2, gameHeight / 2, 'GAME OVER!', {
     fontFamily: 'Arial, sans-serif',
     fontSize: '36px',
     color: '#ffffff',
@@ -122,8 +113,7 @@ function create() {
   });
   gameOverText.setVisible(false);
   gameOverText.setOrigin(0.5);
-  console.log(gameWidth/2 + ", " + gameHeight/2);
-
+  console.log(gameWidth / 2 + ', ' + gameHeight / 2);
 }
 
 // Update game state
