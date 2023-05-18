@@ -6,11 +6,11 @@ var timer;
 var playButton;
 var gameOverText;
 var timerText; // Updated variable name
-var goonGroup;
-var goonPopCount = 0;
-var numgoons = 13;
-var numBackgrounds = 3;
-let goonsMoving = new Array(numgoons).fill(1);
+var myObjGroup;
+var numObjectsAvailable = 75;
+let objectsMoving = new Array(numObjectsAvailable).fill(1);
+var numObjectsInGame = 25;
+var numBackgrounds = 4;
 let score; 
 let keySpace;
 let startTime; // Store the initial time
@@ -36,15 +36,13 @@ var config = {
 
 // Load assets
 function preload() {
-    for (let i = 1; i <= numgoons; i++) {
-      this.load.image(`goon${i}`, `assets/images/goon${i}.png`);
+    for (let i = 1; i <= numObjectsAvailable; i++) {
+      this.load.image(`myObject${i}`, `assets/images/objects/${i}.png`);
     }
 
     for (let i = 1; i <= numBackgrounds; i++) {
-      this.load.image(`background${i}`, `assets/images/b${i}.png`);
-    }
-
-    this.load.image(`play`, `assets/images/play.png`);
+      this.load.image(`background${i}`, `assets/images/backgrounds/background${i}.png`);
+    }    
   }
 
 // Format time as seconds with milliseconds
@@ -79,26 +77,20 @@ function create() {
   // Add the image based on the selected background number
   this.add.image(gameWidth / 2, gameHeight / 2, `background${randomBackgroundNum}`);
 
-  // Add the image based on the selected background number
-  playButton = this.physics.add.image(gameWidth / 2, gameHeight / 2 + 100, `play`);
-  playButton.setVisible(false);
-  playButton.setOrigin(0.5);
-  playButton.setScale(0.50);
-
   keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
   
-  // Add goon group
-  goonGroup = this.physics.add.group({
-    key: 'goon1',
-    repeat: numgoons-1,
+  // Add group
+  myObjGroup = this.physics.add.group({
+    key: 'myObject1',
+    repeat: numObjectsAvailable-1,
     setXY: { x: 0, y: gameHeight+1000, stepX: 150 }
   });
 
   // Set goon physics properties
-  goonGroup.children.iterate(function (child, index) {
+  myObjGroup.children.iterate(function (child, index) {
     // Set goon sprite key dynamically
-    child.setTexture(`goon${index + 1}`);
-    console.log(`goon${index + 1}`);
+    child.setTexture(`myObject${index + 1}`);
+    console.log(`myObject${index + 1}`);
     child.setBounce(Phaser.Math.FloatBetween(0.4, 0.8), Phaser.Math.FloatBetween(0.4, 0.8));
     child.body.collideWorldBounds = true;
     child.body.velocity.x = Phaser.Math.Between(-200, 200);
@@ -142,22 +134,22 @@ function update() {
   this.input.on('pointerdown', function (pointer, gameObject) {
     
     this.cameras.main.shake(100, 0.0025);
-    goonGroup.children.iterate(function (child, index) {
+    myObjGroup.children.iterate(function (child, index) {
       if (child.getBounds().contains(pointer.x, pointer.y)) {
         child.setVelocity(0, -200);
         child.setAcceleration(0, 1000);
-        goonsMoving[index] = 0;
+        objectsMoving[index] = 0;
         child.body.angularVelocity = 0;
       }
     });
   });
   
-  if (goonsMoving.every(num => num === 0)) {
+  if (objectsMoving.every(num => num === 0)) {
     gameOverText.setVisible(true);
     playButton.setVisible(true);    
   }
   // Check if spacebar is down and redirect to bubble popper game if it is
-  if (keySpace.isDown && goonsMoving.every(num => num === 0)) {
+  if (keySpace.isDown && objectsMoving.every(num => num === 0)) {
       console.log('replacing window');
       window.location.replace("../index.html");
   }
