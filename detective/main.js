@@ -1,4 +1,5 @@
 // Global variables
+var uiWidth = 200;
 var gameWidth = 1232;
 var gameHeight = 928;
 var game;
@@ -7,18 +8,21 @@ var playButton;
 var gameOverText;
 var timerText; // Updated variable name
 var myObjGroup;
-var numObjectsAvailable = 75;
-let objectsMoving = new Array(numObjectsAvailable).fill(1);
-var numObjectsInGame = 25;
+var numObjectsAvailable = 5;
+var objectsToFind = 5;
+let numObjectsInGame = new Array(objectsToFind).fill(1);
 var numBackgrounds = 4;
+var numUIs = 3;
 let score; 
 let keySpace;
 let startTime; // Store the initial time
+let uiBar;
+
 
 // Configuration object
 var config = {
   type: Phaser.AUTO,
-  width: gameWidth,
+  width: gameWidth + uiWidth,
   height: gameHeight,
   backgroundColor: '#f0f0f0',
   physics: {
@@ -43,6 +47,11 @@ function preload() {
     for (let i = 1; i <= numBackgrounds; i++) {
       this.load.image(`background${i}`, `assets/images/backgrounds/background${i}.png`);
     }    
+    
+    for (let i = 1; i <= numUIs; i++) {
+      this.load.image(`ui${i}`, `assets/images/ui/ui${i}.png`);
+    }        
+
   }
 
 // Format time as seconds with milliseconds
@@ -76,6 +85,23 @@ function create() {
 
   // Add the image based on the selected background number
   this.add.image(gameWidth / 2, gameHeight / 2, `background${randomBackgroundNum}`);
+
+
+  // Add the image based on the selected UI number
+  const randomUINum = Phaser.Math.Between(1, numUIs);
+  uiBar = this.add.image(gameWidth, gameHeight / 2, `ui${randomUINum}`);
+  
+  // Define the desired target width and height in pixels
+  var targetUIWidthInPixels = 200;
+ 
+  // Calculate the scale factor based on the target size and the original size of the image
+  var scaleByWidth = targetUIWidthInPixels / uiBar.width;
+ 
+  // Choose the smaller scale factor to ensure the image fits within the target size
+  var scaleFactor = Math.min(scaleByWidth);
+  console.log(scaleFactor);
+  // Scale the image using the calculated scale factor
+  uiBar.setScale(scaleFactor);
 
   keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
@@ -112,8 +138,7 @@ function create() {
     strokeThickness: 6
   });
   gameOverText.setVisible(false);
-  gameOverText.setOrigin(0.5);
-  console.log(gameWidth / 2 + ', ' + gameHeight / 2);
+  gameOverText.setOrigin(0.5);  
 }
 
 // Update game state
@@ -123,20 +148,20 @@ function update() {
   
   this.input.on('pointerdown', function (pointer, gameObject) {
     myObjGroup.children.iterate(function (child, index) {
-      if (child.getBounds().contains(pointer.x, pointer.y) && objectsMoving[index] === 1) {
-        objectsMoving[index] = 0;
+      if (child.getBounds().contains(pointer.x, pointer.y) && numObjectsInGame[index] === 1) {
+        numObjectsInGame[index] = 0;
+        objectsToFind --;
         child.setVisible(false);
-        numObjectsInGame--;
+        console.log('Still have ' + objectsToFind + ' objects to find');
       }
     });
   });
   
-  if (objectsMoving.every(num => num === 0) && numObjectsInGame === 0) {
+  if (objectsToFind == 0) {
     gameOverText.setVisible(true);
-    playButton.setVisible(true);
   }
 
-  if (keySpace.isDown && objectsMoving.every(num => num === 0)) {
+  if (keySpace.isDown && objectsToFind == 0) {
     console.log('replacing window');
     window.location.replace('../index.html');
   }
