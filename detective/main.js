@@ -8,16 +8,17 @@ var playButton;
 var gameOverText;
 var timerText; // Updated variable name
 var myObjGroup;
-var numObjectsAvailable = 5;
-var objectsToFind = 5;
-let numObjectsInGame = new Array(objectsToFind).fill(1);
+var numObjectsAvailable = 45;
+var numObjectsToFind = 5;
+let objectsToFind;
 var numBackgrounds = 4;
 var numUIs = 3;
 let score; 
 let keySpace;
 let startTime; // Store the initial time
 let uiBar;
-
+let uiObjects;
+let magnifier;
 
 // Configuration object
 var config = {
@@ -40,7 +41,7 @@ var config = {
 
 // Load assets
 function preload() {
-    for (let i = 1; i <= numObjectsAvailable; i++) {
+    for (let i = 0; i <= numObjectsAvailable; i++) {
       this.load.image(`myObject${i}`, `assets/images/objects/${i}.png`);
     }
 
@@ -50,7 +51,13 @@ function preload() {
     
     for (let i = 1; i <= numUIs; i++) {
       this.load.image(`ui${i}`, `assets/images/ui/ui${i}.png`);
-    }        
+    }   
+    
+    magnifier = this.load.image(`magnifier`, `assets/images/magnifier.png`);
+
+    console.log('Picking ' + numObjectsToFind + ' out of ' +  numObjectsAvailable + ' objects.');
+    objectsToFind = generateRandomIndices(numObjectsAvailable, numObjectsToFind);
+    console.log(objectsToFind);
 
   }
 
@@ -85,20 +92,14 @@ function create() {
 
   // Add the image based on the selected background number
   this.add.image(gameWidth / 2, gameHeight / 2, `background${randomBackgroundNum}`);
-
+  
 
   // Add the image based on the selected UI number
   const randomUINum = Phaser.Math.Between(1, numUIs);
-  uiBar = this.add.image(gameWidth, gameHeight / 2, `ui${randomUINum}`);
-  
-  // Define the desired target width and height in pixels
-  var targetUIWidthInPixels = 200;
- 
-  // Calculate the scale factor based on the target size and the original size of the image
-  var scaleByWidth = targetUIWidthInPixels / uiBar.width;
- 
-  // Choose the smaller scale factor to ensure the image fits within the target size
-  var scaleFactor = Math.min(scaleByWidth);
+  uiBar = this.add.image(gameWidth + (uiWidth /2), gameHeight / 2, `ui${randomUINum}`);
+  var targetUIWidthInPixels = 200; // Define the desired target width and height in pixels 
+  var scaleByWidth = targetUIWidthInPixels / uiBar.width;   // Calculate the scale factor based on the target size and the original size of the image
+  var scaleFactor = Math.min(scaleByWidth); // Choose the smaller scale factor to ensure the image fits within the target size
   console.log(scaleFactor);
   // Scale the image using the calculated scale factor
   uiBar.setScale(scaleFactor);
@@ -120,6 +121,28 @@ function create() {
     object.setScale(0.5);
   }
 
+  // Lay out the targeted objects within the UI bar
+  let currentY = 200; // Starting Y position
+
+  for (let i = 0; i < numObjectsToFind; i++) {
+    uiObjects = this.physics.add.group();
+    const object = uiObjects.create(gameWidth + (uiWidth / 2), currentY, `myObject${objectsToFind[i]}`);
+    console.log('Added ' + `myObject${objectsToFind[i]}`);
+    object.body.allowGravity = false;
+    object.setScale(calculateScaleFactor(object, 150));
+
+    // Update the currentY for the next iteration
+    currentY += 150; // Set the desired vertical spacing between objects
+  }
+  // Add timer text
+  magnifier = this.add.text(gameWidth, 50, 'FIND THESE', {
+    fontFamily: 'Arial, sans-serif',
+    fontSize: '33px',
+    color: '#ffffff',
+    stroke: '#000000',
+    strokeThickness: 6
+  });
+
   // Add timer text
   timerText = this.add.text(16, 16, 'Time: 0.000 s', {
     fontFamily: 'Arial, sans-serif',
@@ -128,7 +151,7 @@ function create() {
     stroke: '#000000',
     strokeThickness: 6
   });
-
+  
   // Add score text
   gameOverText = this.add.text(gameWidth / 2, gameHeight / 2, 'GAME OVER!', {
     fontFamily: 'Arial, sans-serif',
@@ -146,22 +169,43 @@ function update() {
   updateTimer();
   var checkGameOver = 0;
   
-  this.input.on('pointerdown', function (pointer, gameObject) {
-    myObjGroup.children.iterate(function (child, index) {
-      if (child.getBounds().contains(pointer.x, pointer.y) && numObjectsInGame[index] === 1) {
-        numObjectsInGame[index] = 0;
-        objectsToFind --;
-        child.setVisible(false);
-        console.log('Still have ' + objectsToFind + ' objects to find');
-      }
-    });
+// Flag variable to track if the code block should execute
+let isMouseDown = false;
+
+this.input.on('pointerdown', function (pointer, gameObject) {
+  // Set the flag to true when the mouse button is pressed
+  isMouseDown = true;
+});
+
+this.input.on('pointerup', function (pointer, gameObject) {
+  // Set the flag to false when the mouse button is released
+  isMouseDown = false;
+});
+
+myObjGroup.children.iterate(function (child, index) {
+  child.setInteractive();
+
+  child.on('pointerdown', function (pointer) {
+    console.log('Iterating through myObjects: ' + child.texture.key);    
+    // Check if the object is hidden and the mouse button is not held down
+    console.log('Index = ' + index);
+    if (objectsToFind.includes(index+1) && !isMouseDown) {
+      console.log('Found ' + objectsToFind[objectsToFind.indexOf(index+1)]);
+      objectsToFind[objectsToFind.indexOf(index+1)] = -1;
+      numObjectsToFind--;
+      console.log(child + ' is being removed');
+      child.setVisible(false);
+      console.log('Still have ' + numObjectsToFind + ' objects to find');
+      console.log(objectsToFind);
+    }
   });
+});
   
-  if (objectsToFind == 0) {
+  if (numObjectsToFind == 0) {
     gameOverText.setVisible(true);
   }
 
-  if (keySpace.isDown && objectsToFind == 0) {
+  if (keySpace.isDown && numObjectsToFind == 0) {
     console.log('replacing window');
     window.location.replace('../index.html');
   }
@@ -169,3 +213,32 @@ function update() {
 
 // Initialize Phaser game instance
 game = new Phaser.Game(config);
+
+function generateRandomIndices(numObjectsAvailable, numObjectsToFind) {
+  if (numObjectsToFind > numObjectsAvailable) {
+    throw new Error("Number of objects to find cannot exceed the total number of available objects.");
+  }
+
+  const indices = new Set();
+
+  while (indices.size < numObjectsToFind) {
+    const randomIndex = 1+Math.floor(Math.random() * numObjectsAvailable); // Add 1 to the random index
+    indices.add(randomIndex);
+  }
+
+  return Array.from(indices);
+}
+function calculateScaleFactor(image, targetLongestSide) {
+  const originalWidth = image.width;
+  const originalHeight = image.height;
+  
+  let scaleFactor;
+
+  if (originalWidth > originalHeight) {
+    scaleFactor = targetLongestSide / originalWidth;
+  } else {
+    scaleFactor = targetLongestSide / originalHeight;
+  }
+
+  return scaleFactor;
+}
