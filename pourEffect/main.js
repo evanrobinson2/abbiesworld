@@ -33,14 +33,15 @@ function create() {
   // Create your game logic and scene here
   // Create the sub-image group
   subImageGroup = this.add.group();
-
+  
   // Split the image into chunks and store the sub-images in the group
   splitImageIntoChunks.call(this, 'board', chunkWidth, chunkHeight, subImageGroup);
 
+  this.add.image(gameWidth/2, gameHeight/2, 'board');
   console.log(subImageGroup);
 
   // Add the background image
-  backgroundImage = subImageGroup.create(gameWidth / 2, gameHeight / 2, 'board');
+  backgroundImage = 
 
   // Add keyboard input for spacebar
   spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);

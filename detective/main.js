@@ -8,8 +8,8 @@ var playButton;
 var gameOverText;
 var timerText; // Updated variable name
 var myObjGroup;
-var numObjectsAvailable = 45;
-var numObjectsToFind = 5;
+
+
 let objectsToFind;
 var numBackgrounds = 4;
 var numUIs = 3;
@@ -21,6 +21,23 @@ let uiObjects;
 let magnifier;
 let hintScaleTween; // Tween object for hint scaling
 let remaingCountText;
+
+numObjectsToFind = 5;
+numObjectsAvailable = 45;
+
+// Global variables
+if (window.gameParams != null) {
+  var numObjectsAvailable = window.gameParams.numObjectsToLoad;
+  console.log(numObjectsAvailable);
+  if (numObjectsAvailable < 15 || numObjectsAvailable > 75 || !numObjectsAvailable ) { numObjectsAvailable = 45; }
+} else { numObjectsAvailable = 45; console.log('no params'); }
+
+if (window.gameParams != null) {
+  var numObjectsToFind = window.gameParams.numObjectsToFind;
+  console.log(numObjectsToFind);
+  if (numObjectsToFind < 5 || numObjectsToFind > 5 || !numObjectsToFind ) { numObjectsToFind = 5; }
+} else { numObjectsToFind = 5; console.log('no params'); }
+
 
 // Configuration object
 var config = {
@@ -57,7 +74,7 @@ function preload() {
   for (let i = 1; i <= numUIs; i++) {
     this.load.image(`ui${i}`, `assets/images/ui/ui${i}.png`);
   }
-  
+
   objectsToFind = generateRandomIndices(numObjectsAvailable, numObjectsToFind);
 }
 

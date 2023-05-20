@@ -7,6 +7,17 @@
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
+    <script>
+      var urlParams = new URLSearchParams(window.location.search);
+      var numObjectsToLoad = parseInt(urlParams.get('numObjectsToLoad'));
+      var numObjectsToFind = parseInt(urlParams.get('numObjectsToFind'));
+
+      // Pass the parameters to the game script
+      window.gameParams = {
+        numObjectsToLoad: numObjectsToLoad,
+        numObjectsToFind: numObjectsToFind
+      };
+    </script>
     <script src="//cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
     <script src="main.js"></script>
   </body>
