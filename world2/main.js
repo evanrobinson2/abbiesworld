@@ -28,7 +28,7 @@ var game = new Phaser.Game(config);
 
 // Preload assets
 function preload() {
-  this.load.image('background', 'images/background.png');
+  this.load.image('background', 'images/Background.png');
   this.load.image('player', 'images/player.png');
   this.load.image('goon', 'images/goon.png');
   this.load.image('princess', 'images/princess.png'); 
