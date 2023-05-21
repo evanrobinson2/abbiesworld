@@ -99,7 +99,7 @@ function create() {
   scene1.setScale(1);
   scene1.setOrigin(0,0);
   scene1.setInteractive(); 
-  scene1.setVisible(FALSE);
+  scene1.setVisible(false);
 
   // Add scene1 sprite
   scene2 = this.add.image(100, 100, 'scene2');
