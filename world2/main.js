@@ -6,6 +6,8 @@ let goon;
 let princess;
 let ladybug1;
 let ladybug2;
+let scene1;
+let scene2;
 let path;
 let currentWaypoint = 0;
 let scene;
@@ -34,14 +36,19 @@ function preload() {
   this.load.image('princess', 'images/princess.png'); 
   this.load.image('ladybug1', 'images/ladybug1.png'); 
   this.load.image('ladybug2', 'images/ladybug2.png'); 
+  this.load.image('scene1', 'images/scene1.png'); 
+  this.load.image('scene2', 'images/scene2.png'); 
+  
 }
 
 // Create game objects
 function create() {
   scene = this; // Store the scene instance
 
+  // add the background image
   var image = this.add.image(gameWidth / 2, gameHeight / 2, 'background');
   
+  // add the gameboard paths
   var filename = 'assets/gameboard.csv';
   path = populatePathFromFile(filename);
   console.log(path);
@@ -52,9 +59,6 @@ function create() {
   player.setOrigin(0.5, 1)
   player.setInteractive(); // Enable input interaction on the player
   addBouncingTween(player);
-
-  // Move player along the path using a tween
-  movePlayerToNextWaypoint();
 
   // Listen for spacebar key press
   this.input.keyboard.on('keydown-SPACE', resumeMovement);
@@ -89,6 +93,21 @@ function create() {
   ladybug2.setOrigin(0.5, 1)
   ladybug2.setInteractive(); // Enable input interaction on ladybug2
   addBouncingTween(ladybug2);
+
+  // Add scene1 sprite
+  scene1 = this.add.image(100, 100, 'scene1');
+  scene1.setScale(1);
+  scene1.setOrigin(0,0);
+  scene1.setInteractive(); 
+  scene1.setVisible(FALSE);
+
+  // Add scene1 sprite
+  scene2 = this.add.image(100, 100, 'scene2');
+  scene2.setScale(1);
+  scene2.setOrigin(0,0);
+  scene2.setInteractive();
+  scene2.setVisible(false);
+  
 }
 
 // Function to add bouncing tween effect
@@ -106,15 +125,13 @@ function addBouncingTween(sprite) {
   });
 }
 
-
-
 // Update game state
 function update() {
   // Calculate the distance between the player and the current waypoint
   var distance = Phaser.Math.Distance.Between(player.x, player.y, path[currentWaypoint].x, path[currentWaypoint].y);
 
   // Check if the player has reached the current waypoint
-  if (distance < 1) {
+  if (distance < 0.05) {
     // Check if the player is resting at the waypoint
     if (restingTween) {
       // Check if the spacebar is pressed or if the player is clicked
@@ -122,6 +139,7 @@ function update() {
         resumeMovement();
       }
     } else {
+      console.log('Resting');
       startResting();
     }
   }
@@ -133,9 +151,6 @@ function update() {
 
       // Log pixel coordinates to the console
       console.log('x: ' + clickedX + ', y: ' + clickedY);
-
-      // Add clicked coordinates to the path
-      // path.push({ x: clickedX, y: clickedY });
     });
 }
 
@@ -145,7 +160,10 @@ function movePlayerToNextWaypoint() {
   if (currentWaypoint >= path.length) {
     currentWaypoint = 0;
   }
-
+  
+  console.log('Moving from (' + player.x + "," + player.y + ")");
+  console.log('Moving to   (' +  path[currentWaypoint].x + "," +path[currentWaypoint].y + ")");
+  
   // Move player to the next waypoint using a tween
   scene.tweens.add({
     targets: player,
@@ -158,10 +176,8 @@ function movePlayerToNextWaypoint() {
 
 // Start resting at the waypoint
 function startResting() {
-  // Pause the movement tween
-  // scene.tweens.pauseAll();
-
   // Apply bouncing tween effect to the player image
+  console.log('Arrived at (' + player.x + ',' + player.y +')');
   restingTween = scene.tweens.add({
     targets: player,
     y: '-=10',
@@ -178,6 +194,16 @@ function startResting() {
 
 // Resume movement from the resting state
 function resumeMovement() {
+  console.log('Resuming Movement');
+  // Check if there is a restingTween and it is active
+  if (restingTween) {
+    restingTween.stop(true, false);
+    removeRestingTweenAndResumeMovement();
+  }
+}
+
+// Function to remove the resting tween and resume movement
+function removeRestingTweenAndResumeMovement() {
   // Remove the resting tween
   scene.tweens.remove(restingTween);
   restingTween = null;
@@ -188,7 +214,6 @@ function resumeMovement() {
   // Move player to the next waypoint
   movePlayerToNextWaypoint();
 }
-
 
 function populatePathFromFile(filename) {
     // Load the CSV file (assuming it's in the same directory)
@@ -201,12 +226,13 @@ function populatePathFromFile(filename) {
     var path = [];
   
     // Extract the x and y values from each line and create objects in the path array
-    for (var i = 1; i < lines.length; i++) {
+    for (var i = 1; i < lines.length-1; i++) {
       var values = lines[i].split(',');
   
       var x = parseInt(values[0]);
       var y = parseFloat(values[1]);
   
+      console.log("x="+x+",y="+y);
       path.push({ x: x, y: y });
     }
   
