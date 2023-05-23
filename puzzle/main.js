@@ -238,6 +238,20 @@ const onPiecePointerUp = (piece) => {
   piece.depth = 0;
 
   previousPointer = null;
+
+  // Calculate the distance between the current position and the expected position
+  const distance = Phaser.Math.Distance.Between(piece.x, piece.y, initialPiecePosition.x, initialPiecePosition.y);
+
+  // Snap the piece into place if it's close enough to the expected position
+  if (distance <= 25) {
+    console.log("Locked in Place!");
+    piece.x = initialPiecePosition.x;
+    piece.y = initialPiecePosition.y;
+    // Disable further pointer events on the puzzle piece
+    piece.disableInteractive();
+  }
+  // Reset the depth of the puzzle piece to its default value
+  piece.depth = 0;
 };
 
 // Event handler for puzzle piece pointer move
@@ -256,8 +270,8 @@ const onPiecePointerMove = (pointer, piece) => {
   const newX = piece.x + offsetX;
   const newY = piece.y + offsetY;
 
-  console.log("Piece: (" + piece.x + ", " + piece.y + ")");
-  console.log("previousPointer: (" + previousPointer.x + ", " + previousPointer.y + ")");
+  // console.log("Piece: (" + piece.x + ", " + piece.y + ")");
+  // console.log("previousPointer: (" + previousPointer.x + ", " + previousPointer.y + ")");
 
   // Update the position of the puzzle piece
   piece.x = newX;
