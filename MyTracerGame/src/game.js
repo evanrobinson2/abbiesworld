@@ -1,7 +1,10 @@
 var gameWidth = 1232;
 var gameHeight = 923;
 var player;
+var playerSpeed = 300;
+
 var goon1;
+var goon1Velocity;
 var goon2;
 var prizePic;
 var scene;
@@ -74,24 +77,29 @@ function create() {
 
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
-
+    lineGraphics.setDepth(2);
+    
+    
     player = scene.physics.add.sprite(gameWidth / 2, 0, 'player');
-    player.setScale(0.5);
-    player.body.collideWorldBounds = true; // Enable collision with world bounds
-
+    player.setScale(0.2);
+    player.setDepth(2);
+    player.setOrigin(0.5);
+    
     goon1 = scene.physics.add.sprite(gameWidth / 2, 0, 'goon1');
-    goon1.setScale(0.5);
-    goon1.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
+    goon1.setScale(0.2);
+    goon1.setVelocity(200, 150);
     goon1.setBounce(1);
     goon1.setCollideWorldBounds(true);
     goon1.setAngularVelocity(goon1.body.velocity.x * goonRotationSpeed);
+    goon1.setDepth(2);
 
     goon2 = scene.physics.add.sprite(gameWidth / 2, 0, 'goon2');
-    goon2.setScale(0.5);
+    goon2.setScale(0.2);
     goon2.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
     goon2.setBounce(1);
     goon2.setCollideWorldBounds(true);
     goon2.setAngularVelocity(goon2.body.velocity.x * goonRotationSpeed);
+    goon2.setDepth(2);
 
     // Enable keyboard input
     cursors = scene.input.keyboard.addKeys({
@@ -135,32 +143,34 @@ function update() {
     var rotationSpeed = 0.5 * Math.PI; // Convert cycles/sec to radians/sec
     player.rotation += rotationSpeed * scene.sys.game.loop.delta / 1000; // Divide by 1000 to convert to seconds
 
-    if (cursors.up.isDown) {
-        recentDirection = 'up';
-    } else if (cursors.down.isDown) {
-        recentDirection = 'down';
-    } else if (cursors.left.isDown) {
-        recentDirection = 'left';
-    } else if (cursors.right.isDown) {
-        recentDirection = 'right';
-    }
+    // Handle player movement with extended bounds
+    // player.setVelocity(0);
 
-    if (recentDirection === 'up' && player.y > 0) {
-        player.setVelocityY(-100);
+    var halfWidth = player.displayWidth / 2;
+    var halfHeight = player.displayHeight / 2;
+
+    // Handle player movement with extended bounds
+    if (cursors.up.isDown && player.y > 0 + halfHeight) {
+        player.setVelocityY(-1 * playerSpeed);
         player.setVelocityX(0);
-    } else if (recentDirection === 'down' && player.y < gameHeight) {
-        player.setVelocityY(100);
+    } else if (cursors.down.isDown && player.y < gameHeight - halfHeight) {
+        player.setVelocityY(playerSpeed);
         player.setVelocityX(0);
     }
 
-    if (recentDirection === 'left' && player.x > 0) {
-        player.setVelocityX(-100);
+    console.log('(' + halfWidth + ',' + halfHeight + ')');
+
+    if (player.x < -halfWidth) { player.x = 0; player.setVelocityX(0); }
+    if (player.x > gameWidth+halfWidth) { player.x = gameWidth; player.setVelocityX(0); }
+    if (player.y < -halfHeight) { player.y = 0; player.setVelocityY(0); }
+    if (player.y > gameHeight) { player.y = gameHeight; player.setVelocityY(0); }
+
+    if (cursors.left.isDown && player.x > 0 + halfWidth) {
+        player.setVelocityX(-1 * playerSpeed);
         player.setVelocityY(0);
-        player.setFlipX(false); // Prevent flipping
-    } else if (recentDirection === 'right' && player.x < gameWidth) {
-        player.setVelocityX(100);
+    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth) {
+        player.setVelocityX(playerSpeed);
         player.setVelocityY(0);
-        player.setFlipX(false); // Prevent flipping
     }
 
     // Check if a new segment is added
@@ -191,6 +201,7 @@ function update() {
 function writeUI() {
     // Update the UI text here
     uiText.setText('Number of Segments: ' + numSegments + '\r\nPaused: ' + isPaused);
+    uiText.setDepth(3);
 }
 
 function togglePause() {
@@ -198,6 +209,7 @@ function togglePause() {
 
     console.log('isPaused ' + isPaused);
 
+    // TODO - store the player and goon's velocity, then set them to zero, restore them upon reload
     // Reset recent direction when resuming
     if (!isPaused) {
         recentDirection = null;
