@@ -38,6 +38,7 @@ function preload() {
   this.load.image('ladybug2', 'images/ladybug2.png'); 
   this.load.image('scene1', 'images/scene1.png'); 
   this.load.image('scene2', 'images/scene2.png');   
+  this.load.image('unicorn', 'images/unicorn.png');
 }
 
 // Create game objects
@@ -60,7 +61,15 @@ function create() {
 
   // Add goon sprite
   goon = this.add.image(261, 412, 'goon');
-  goon.setScale(0.15);
+  goon.setScale(0.25);
+  goon.setOrigin(0.5, 1)
+  goon.setInteractive(); // Enable input interaction on the goon
+  goon.setVisible(true);
+  goon.radius = 100;
+
+  // Add goon sprite
+  goon = this.add.image(709, 512, 'unicorn');
+  goon.setScale(0.25);
   goon.setOrigin(0.5, 1)
   goon.setInteractive(); // Enable input interaction on the goon
   goon.setVisible(true);
@@ -68,21 +77,21 @@ function create() {
 
   // Add princess sprite
   princess = this.add.image(520, 270, 'princess');
-  princess.setScale(0.15);
+  princess.setScale(0.25);
   princess.setOrigin(0.5, 1)
   princess.setInteractive(); // Enable input interaction on the princess
   princess.setVisible(true);
   
   // Add ladybug1 sprite
   ladybug1 = this.add.image(1015, 448, 'ladybug1');
-  ladybug1.setScale(0.10);
+  ladybug1.setScale(0.25);
   ladybug1.setOrigin(0.5, 1)
   ladybug1.setInteractive(); // Enable input interaction on ladybug1
   ladybug1.setVisible(true);
   
   // Add ladybug2 sprite
   ladybug2 = this.add.image(1156, 444, 'ladybug2');
-  ladybug2.setScale(0.12);
+  ladybug2.setScale(0.25);
   ladybug2.setOrigin(0.5, 1)
   ladybug2.setInteractive(); // Enable input interaction on ladybug2
   ladybug2.setVisible(true);
@@ -121,6 +130,9 @@ function update() {
     // Log rounded coordinates to the console
     console.log('x: ' + clickedX + ', y: ' + clickedY);
   });
+
+  
+
 }
 
 // Move player to the next waypoint
@@ -155,6 +167,7 @@ function movePlayerToNextWaypoint() {
     duration: duration,
     onComplete: function () {
       playerMoving = false;
+      checkPlayerCloseToGoon();
     }
   });
 }
@@ -197,4 +210,18 @@ function addBouncingTween(sprite) {
     yoyoEase: 'Bounce.easeInOut',
     hold: 1
   });
+}
+
+// Function to check if the player comes close to the goon
+function checkPlayerCloseToGoon() {
+  if (Phaser.Geom.Circle.Contains(goon.zone, player.x, player.y)) {
+    // Show scene1 if the player is close to the goon
+    scene1.setVisible(true);
+    // Add "Play" and "No Thanks" button
+    let playButton = scene.add.text(gameWidth / 2, gameHeight / 2, 'Play', { fill: '#0f0' }).setInteractive();
+    playButton.on('pointerdown', () => window.location.href = "../goonpopper/index.html"); // Redirect to goonpopper game
+
+    let noThanksButton = scene.add.text(gameWidth / 2, gameHeight / 2 + 50, 'No Thanks', { fill: '#f00' }).setInteractive();
+    noThanksButton.on('pointerdown', () => scene1.setVisible(false)); // Hide scene1 when "No Thanks" is clicked
+  }
 }

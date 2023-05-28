@@ -226,7 +226,6 @@ function onPiecePointerDown(pointer, localX, localY, event, piece) {
 
 }
 
-// Event handler for puzzle piece pointer up
 const onPiecePointerUp = (piece) => {
   // Remove the pointermove event listener
   piece.off('pointermove');
@@ -239,19 +238,35 @@ const onPiecePointerUp = (piece) => {
 
   previousPointer = null;
 
-  // Calculate the distance between the current position and the expected position
-  const distance = Phaser.Math.Distance.Between(piece.x, piece.y, initialPiecePosition.x, initialPiecePosition.y);
+  // Calculate the distance between the current top-left position and the expected position
+  const frameIndex = piece.frame.name;
+  const frameWidth = piece.frame.width;
+  const frameHeight = piece.frame.height;
 
-  // Snap the piece into place if it's close enough to the expected position
-  if (distance <= 25) {
-    console.log("Locked in Place!");
-    piece.x = initialPiecePosition.x;
-    piece.y = initialPiecePosition.y;
+  // const expectedX = Math.floor(frameIndex % 4) * frameWidth;
+  // const expectedY = Math.floor(frameIndex / 4) * frameHeight;
+  const expectedX = (Math.floor(frameIndex % 4) * frameWidth) + frameWidth / 2;
+  const expectedY = (Math.floor(frameIndex / 4) * frameHeight) + frameHeight / 2;
+
+
+
+  const distance = Phaser.Math.Distance.Between(piece.x, piece.y, expectedX, expectedY);
+
+  // Define the maximum allowed distance for snapping
+  const maxSnapDistance = 100; // Adjust this value as needed
+
+  // Snap the piece into place if it's within the maximum distance
+  if (distance <= maxSnapDistance) {
+    piece.x = expectedX;
+    piece.y = expectedY;
+
     // Disable further pointer events on the puzzle piece
     piece.disableInteractive();
+
+    console.log("Locked in Place!");
+      // Bring all unsnapped pieces to the foreground
+    bringUnsnappedPiecesToFront();
   }
-  // Reset the depth of the puzzle piece to its default value
-  piece.depth = 0;
 };
 
 // Event handler for puzzle piece pointer move
@@ -291,4 +306,13 @@ function onGlobalPointerUp(event) {
 
   // Remove the global pointerup event listener from the window object
   window.removeEventListener('pointerup', onGlobalPointerUp);
+}
+
+// Function to bring all unsnapped pieces to the foreground
+function bringUnsnappedPiecesToFront() {
+  puzzlePieces.forEach((piece) => {
+    if (piece.input.enabled) {
+      piece.depth = 1; // Bring unsnapped pieces to the foreground
+    }
+  });
 }

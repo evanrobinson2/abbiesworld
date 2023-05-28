@@ -51,7 +51,7 @@ function preload() {
     this.load.image('player', 'assets/images/player.png');
     this.load.image('goon1', 'assets/images/goon1.png');
     this.load.image('goon2', 'assets/images/goon2.png');
-    this.load.image('starfield', 'assets/images/starfield.png');
+    this.load.image('background', 'assets/images/starfield.png');
 }
 
 function create() {
@@ -62,29 +62,27 @@ function create() {
     var prizeImages = ['prize1', 'prize2', 'prize3', 'prize4'];
     var randomPrizeImage = Phaser.Math.RND.pick(prizeImages);
 
-    // Create background image
-    background = scene.add.image(0, 0, 'starfield').setOrigin(0);
-                     
     // Create prize image
     prize = scene.add.image(0, 0, randomPrizeImage).setOrigin(0);
+    prize.setDepth(-1);
 
-    // Set depth for proper layering
-    background.setDepth(0);
-    prize.setDepth(1);
+    // Create background image
+    background = this.add.image(gameWidth / 2, gameHeight / 2, 'background').setDepth(0);
+
+    
 
     // Register 'F' key input for changing the order of the images
-    scene.input.keyboard.on('keydown-F', toggleImageOrder);    
+    scene.input.keyboard.on('keydown-F', toggleImageOrder);
 
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
     lineGraphics.setDepth(2);
-    
-    
+
     player = scene.physics.add.sprite(gameWidth / 2, 0, 'player');
     player.setScale(0.2);
     player.setDepth(2);
     player.setOrigin(0.5);
-    
+
     goon1 = scene.physics.add.sprite(gameWidth / 2, 0, 'goon1');
     goon1.setScale(0.2);
     goon1.setVelocity(200, 150);
@@ -121,8 +119,6 @@ function create() {
         wordWrap: { width: gameWidth - 20 }
     });
 
-    console.log(player.rotation);
-
     // Register spacebar input for pausing/resuming the game
     scene.input.keyboard.on('keydown-SPACE', togglePause);
 }
@@ -144,12 +140,9 @@ function update() {
     player.rotation += rotationSpeed * scene.sys.game.loop.delta / 1000; // Divide by 1000 to convert to seconds
 
     // Handle player movement with extended bounds
-    // player.setVelocity(0);
-
     var halfWidth = player.displayWidth / 2;
     var halfHeight = player.displayHeight / 2;
 
-    // Handle player movement with extended bounds
     if (cursors.up.isDown && player.y > 0 + halfHeight) {
         player.setVelocityY(-1 * playerSpeed);
         player.setVelocityX(0);
@@ -158,12 +151,22 @@ function update() {
         player.setVelocityX(0);
     }
 
-    console.log('(' + halfWidth + ',' + halfHeight + ')');
-
-    if (player.x < -halfWidth) { player.x = 0; player.setVelocityX(0); }
-    if (player.x > gameWidth+halfWidth) { player.x = gameWidth; player.setVelocityX(0); }
-    if (player.y < -halfHeight) { player.y = 0; player.setVelocityY(0); }
-    if (player.y > gameHeight) { player.y = gameHeight; player.setVelocityY(0); }
+    if (player.x < -halfWidth) {
+        player.x = 0;
+        player.setVelocityX(0);
+    }
+    if (player.x > gameWidth + halfWidth) {
+        player.x = gameWidth;
+        player.setVelocityX(0);
+    }
+    if (player.y < -halfHeight) {
+        player.y = 0;
+        player.setVelocityY(0);
+    }
+    if (player.y > gameHeight) {
+        player.y = gameHeight;
+        player.setVelocityY(0);
+    }
 
     if (cursors.left.isDown && player.x > 0 + halfWidth) {
         player.setVelocityX(-1 * playerSpeed);
@@ -180,17 +183,18 @@ function update() {
     if (!lastSegment || currentSegment.x !== lastSegment.x || currentSegment.y !== lastSegment.y) {
         trailPoints.push(currentSegment);
         numSegments = trailPoints.length - 1;
-    }
 
-    // Clear the previous trail line
-    lineGraphics.clear();
+        // Draw the trail line
+        lineGraphics.clear();
+        lineGraphics.lineStyle(2, 0xffffff);
+        for (var i = 0; i < trailPoints.length - 1; i++) {
+            var p1 = trailPoints[i];
+            var p2 = trailPoints[i + 1];
+            lineGraphics.lineBetween(p1.x, p1.y, p2.x, p2.y);
+        }
 
-    // Draw the trail line
-    lineGraphics.lineStyle(2, 0xffffff);
-    for (var i = 0; i < trailPoints.length - 1; i++) {
-        var p1 = trailPoints[i];
-        var p2 = trailPoints[i + 1];
-        lineGraphics.lineBetween(p1.x, p1.y, p2.x, p2.y);
+        // Apply mask to reveal the prize layer
+        applyMask();
     }
 
     // Update goons' rotation based on velocity
@@ -207,13 +211,9 @@ function writeUI() {
 function togglePause() {
     isPaused = !isPaused;
 
-    console.log('isPaused ' + isPaused);
-
-    // TODO - store the player and goon's velocity, then set them to zero, restore them upon reload
     // Reset recent direction when resuming
     if (!isPaused) {
         recentDirection = null;
-        pauseVelocity = player.velocity;
         player.rotation = 0;
         player.setVelocityX(0);
         player.setVelocityY(0);
@@ -230,4 +230,30 @@ function toggleImageOrder() {
 
     // Set the prize depth to the current background depth
     prize.setDepth(backgroundDepth);
+}
+
+function applyMask() {
+    // Create a mask graphics object
+    var maskGraphics = scene.add.graphics();
+    maskGraphics.fillStyle(0xffffff); // Fill with white color
+    maskGraphics.beginPath();
+
+    // Start from the player's initial position
+    maskGraphics.moveTo(trailPoints[0].x, trailPoints[0].y);
+
+    // Draw lines to connect all the trail points
+    for (var i = 1; i < trailPoints.length; i++) {
+        maskGraphics.lineTo(trailPoints[i].x, trailPoints[i].y);
+    }
+
+    // Close the path
+    maskGraphics.closePath();
+    maskGraphics.fillPath();
+
+
+    // Apply the mask to the prize image
+    // background.setMask(new Phaser.Display.Masks.GeometryMask(scene, maskGraphics));
+
+    // Destroy the mask graphics object
+    maskGraphics.destroy();
 }
