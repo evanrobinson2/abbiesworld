@@ -252,8 +252,86 @@ function applyMask() {
 
 
     // Apply the mask to the prize image
-    // background.setMask(new Phaser.Display.Masks.GeometryMask(scene, maskGraphics));
+    background.setMask(new Phaser.Display.Masks.GeometryMask(scene, maskGraphics));
 
     // Destroy the mask graphics object
     maskGraphics.destroy();
+}
+
+
+function reducePoints(points) {
+    if (points.length < 2) {
+        return points; // If there are less than 2 points, there's nothing to reduce.
+    }
+
+    // Array to store the reduced points
+    let reducedPoints = [points[0]];
+
+    // Determine initial direction
+    let direction;
+    if (points[0].x === points[1].x) {
+        direction = 'y';
+    } else if (points[0].y === points[1].y) {
+        direction = 'x';
+    }
+
+    for(let i = 1; i < points.length - 1; i++) {
+        let currentPoint = points[i];
+        let nextPoint = points[i+1];
+
+        // Determine the current direction
+        let newDirection;
+        if (currentPoint.x === nextPoint.x) {
+            newDirection = 'y';
+        } else if (currentPoint.y === nextPoint.y) {
+            newDirection = 'x';
+        }
+
+        // If there's a change in direction, add the current point to the reducedPoints
+        if (newDirection !== direction) {
+            reducedPoints.push(currentPoint);
+            direction = newDirection;
+        }
+    }
+
+    // Add the last point
+    reducedPoints.push(points[points.length - 1]);
+
+    return reducedPoints;
+}
+
+
+function findRectangles(points) {
+    let rectangles = [];
+    let horizontalLines = [];
+    let verticalLines = [];
+
+    for (let i = 0; i < points.length - 1; i++) {
+        let pointA = points[i];
+        let pointB = points[i + 1];
+
+        if (pointA.x === pointB.x) {
+            // This is a vertical line segment
+            verticalLines.push({ start: Math.min(pointA.y, pointB.y), end: Math.max(pointA.y, pointB.y), x: pointA.x });
+        } else {
+            // This is a horizontal line segment
+            let hLine = { start: Math.min(pointA.x, pointB.x), end: Math.max(pointA.x, pointB.x), y: pointA.y };
+            horizontalLines.push(hLine);
+
+            // Check for intersections with existing vertical line segments
+            for (let vLine of verticalLines) {
+                // For every pair of vertical lines that intersect the current horizontal line
+                // a rectangle can be formed.
+                for (let vLine2 of verticalLines) {
+                    if (vLine === vLine2) continue;
+                    if (vLine.start <= hLine.y && vLine.end >= hLine.y && vLine2.start <= hLine.y && vLine2.end >= hLine.y) {
+                        // This is a rectangle
+                        rectangles.push({ x: Math.min(vLine.x, vLine2.x), y: hLine.y, width: Math.abs(vLine.x - vLine2.x), height: hLine.y - Math.max(vLine.start, vLine2.start) });
+                    }
+                }
+            }
+        }
+    }
+
+    return rectangles;
 }
