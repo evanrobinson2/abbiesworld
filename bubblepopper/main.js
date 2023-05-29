@@ -9,10 +9,10 @@ var scoreText;
 var balloonGroup;
 var balloonPopCount = 0;
 var numBalloons = 11;
-var numBackgrounds = 8;
+var numBackgrounds = 1;
 let balloonsMoving = new Array(11).fill(1);
 
-let keySpace;
+let keySpace;    
 
 // Configuration object
 var config = {
@@ -49,7 +49,7 @@ function preload() {
 function create() {
   // Add background
   // Randomly select a background number between 1 and numBackgrounds
-  const numBackgrounds = 5; // Replace with the actual number of available background images
+  const numBackgrounds = 1; // Replace with the actual number of available background images
   const randomBackgroundNum = Phaser.Math.Between(1, numBackgrounds);
 
   // Add the image based on the selected background number
