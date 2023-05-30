@@ -10,8 +10,18 @@ var prizePic;
 var scene;
 var cursors;
 var lineGraphics;
+var maskGraphics;
 var trailPoints = [];
-var numSegments = 0;
+var perimeter = [
+{ x: 0, y: 0 },
+{ x: gameWidth, y: 0 },
+{ x: gameWidth, y: gameHeight },
+{ x: 0, y: gameHeight },
+{ x: 0, y: 0}
+];
+
+var numRectangles = 0;
+var numPoints = 0;
 var uiText;
 var recentDirection = null;
 var isPaused = false;
@@ -20,6 +30,7 @@ var prize;
 var goonSpeed = 200; // Initial speed of the goons
 var goonRotationSpeed = 0.1; // Rotation speed multiplier
 var goonSpeedIncrease = 0.001; // Speed increase on bounce
+var isSafe = true;
 
 var config = {
     type: Phaser.AUTO,
@@ -68,17 +79,14 @@ function create() {
 
     // Create background image
     background = this.add.image(gameWidth / 2, gameHeight / 2, 'background').setDepth(0);
-
-    
-
-    // Register 'F' key input for changing the order of the images
-    scene.input.keyboard.on('keydown-F', toggleImageOrder);
+    maskGraphics = this.add.graphics();
+    console.log(maskGraphics);
 
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
     lineGraphics.setDepth(2);
 
-    player = scene.physics.add.sprite(gameWidth / 2, 0, 'player');
+    player = scene.physics.add.sprite(0, 0, 'player');
     player.setScale(0.2);
     player.setDepth(2);
     player.setOrigin(0.5);
@@ -139,72 +147,50 @@ function update() {
     var rotationSpeed = 0.5 * Math.PI; // Convert cycles/sec to radians/sec
     player.rotation += rotationSpeed * scene.sys.game.loop.delta / 1000; // Divide by 1000 to convert to seconds
 
-    // Handle player movement with extended bounds
-    var halfWidth = player.displayWidth / 2;
-    var halfHeight = player.displayHeight / 2;
+    handlePlayerMovement();
 
-    if (cursors.up.isDown && player.y > 0 + halfHeight) {
-        player.setVelocityY(-1 * playerSpeed);
-        player.setVelocityX(0);
-    } else if (cursors.down.isDown && player.y < gameHeight - halfHeight) {
-        player.setVelocityY(playerSpeed);
-        player.setVelocityX(0);
-    }
+    // Check if a new point is added
+    var currentPoint = { x: player.x, y: player.y };
+    var lastPoint = trailPoints[trailPoints.length - 1];
 
-    if (player.x < -halfWidth) {
-        player.x = 0;
-        player.setVelocityX(0);
-    }
-    if (player.x > gameWidth + halfWidth) {
-        player.x = gameWidth;
-        player.setVelocityX(0);
-    }
-    if (player.y < -halfHeight) {
-        player.y = 0;
-        player.setVelocityY(0);
-    }
-    if (player.y > gameHeight) {
-        player.y = gameHeight;
-        player.setVelocityY(0);
-    }
 
-    if (cursors.left.isDown && player.x > 0 + halfWidth) {
-        player.setVelocityX(-1 * playerSpeed);
-        player.setVelocityY(0);
-    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth) {
-        player.setVelocityX(playerSpeed);
-        player.setVelocityY(0);
-    }
+    isSafe = isPointOnPerimeter( currentPoint, perimeter );
 
-    // Check if a new segment is added
-    var currentSegment = { x: player.x, y: player.y };
-    var lastSegment = trailPoints[trailPoints.length - 1];
+    if (!isSafe) {
+        if (!lastPoint || currentPoint.x !== lastPoint.x || currentPoint.y !== lastPoint.y) {
+            trailPoints.push(currentPoint);
+            numPoints = trailPoints.length - 1;
 
-    if (!lastSegment || currentSegment.x !== lastSegment.x || currentSegment.y !== lastSegment.y) {
-        trailPoints.push(currentSegment);
-        numSegments = trailPoints.length - 1;
-
-        // Draw the trail line
-        lineGraphics.clear();
-        lineGraphics.lineStyle(2, 0xffffff);
-        for (var i = 0; i < trailPoints.length - 1; i++) {
-            var p1 = trailPoints[i];
-            var p2 = trailPoints[i + 1];
-            lineGraphics.lineBetween(p1.x, p1.y, p2.x, p2.y);
+            // Draw the trail line
+            lineGraphics.clear();
+            lineGraphics.lineStyle(2, 0xffffff);
+            for (var i = 0; i < trailPoints.length - 1; i++) {
+                var p1 = trailPoints[i];
+                var p2 = trailPoints[i + 1];
+                lineGraphics.lineBetween(p1.x, p1.y, p2.x, p2.y);
+            }
         }
+    }
 
-        // Apply mask to reveal the prize layer
-        applyMask();
+    if (isSafe && trailPoints.length > 0)
+    {
+        console.log('Returned to Perimeter!');
+        var completePath = getCompletedPath(reducePoints(trailPoints), perimeter);
+        console.log(reducePoints(trailPoints));
+        console.log('Complete path: ' + JSON.stringify(completePath));
+
+        trailPoints = []; 
     }
 
     // Update goons' rotation based on velocity
     goon1.setAngularVelocity(goon1.body.velocity.x * goonRotationSpeed);
     goon2.setAngularVelocity(goon2.body.velocity.x * goonRotationSpeed);
+  
 }
 
 function writeUI() {
     // Update the UI text here
-    uiText.setText('Number of Segments: ' + numSegments + '\r\nPaused: ' + isPaused);
+    uiText.setText('Number of Trailpoints: ' + numPoints + '\r\nPaused: ' + isPaused + '\r\nIs Safe: ' + isSafe);
     uiText.setDepth(3);
 }
 
@@ -219,45 +205,6 @@ function togglePause() {
         player.setVelocityY(0);
     }
 }
-
-function toggleImageOrder() {
-    // Get the current depths of the background and prize images
-    var backgroundDepth = background.depth;
-    var prizeDepth = prize.depth;
-
-    // Set the background depth to the current prize depth
-    background.setDepth(prizeDepth);
-
-    // Set the prize depth to the current background depth
-    prize.setDepth(backgroundDepth);
-}
-
-function applyMask() {
-    // Create a mask graphics object
-    var maskGraphics = scene.add.graphics();
-    maskGraphics.fillStyle(0xffffff); // Fill with white color
-    maskGraphics.beginPath();
-
-    // Start from the player's initial position
-    maskGraphics.moveTo(trailPoints[0].x, trailPoints[0].y);
-
-    // Draw lines to connect all the trail points
-    for (var i = 1; i < trailPoints.length; i++) {
-        maskGraphics.lineTo(trailPoints[i].x, trailPoints[i].y);
-    }
-
-    // Close the path
-    maskGraphics.closePath();
-    maskGraphics.fillPath();
-
-
-    // Apply the mask to the prize image
-    background.setMask(new Phaser.Display.Masks.GeometryMask(scene, maskGraphics));
-
-    // Destroy the mask graphics object
-    maskGraphics.destroy();
-}
-
 
 function reducePoints(points) {
     if (points.length < 2) {
@@ -300,38 +247,142 @@ function reducePoints(points) {
     return reducedPoints;
 }
 
+function handlePlayerMovement() {
+    // Handle player movement with extended bounds
+    var halfWidth = player.displayWidth / 2;
+    var halfHeight = player.displayHeight / 2;
 
-function findRectangles(points) {
-    let rectangles = [];
-    let horizontalLines = [];
-    let verticalLines = [];
-
-    for (let i = 0; i < points.length - 1; i++) {
-        let pointA = points[i];
-        let pointB = points[i + 1];
-
-        if (pointA.x === pointB.x) {
-            // This is a vertical line segment
-            verticalLines.push({ start: Math.min(pointA.y, pointB.y), end: Math.max(pointA.y, pointB.y), x: pointA.x });
-        } else {
-            // This is a horizontal line segment
-            let hLine = { start: Math.min(pointA.x, pointB.x), end: Math.max(pointA.x, pointB.x), y: pointA.y };
-            horizontalLines.push(hLine);
-
-            // Check for intersections with existing vertical line segments
-            for (let vLine of verticalLines) {
-                // For every pair of vertical lines that intersect the current horizontal line
-                // a rectangle can be formed.
-                for (let vLine2 of verticalLines) {
-                    if (vLine === vLine2) continue;
-                    if (vLine.start <= hLine.y && vLine.end >= hLine.y && vLine2.start <= hLine.y && vLine2.end >= hLine.y) {
-                        // This is a rectangle
-                        rectangles.push({ x: Math.min(vLine.x, vLine2.x), y: hLine.y, width: Math.abs(vLine.x - vLine2.x), height: hLine.y - Math.max(vLine.start, vLine2.start) });
-                    }
-                }
-            }
-        }
+    if (cursors.up.isDown && player.y > 0 + halfHeight) {
+        player.setVelocityY(-1 * playerSpeed);
+        player.setVelocityX(0);
+    } else if (cursors.down.isDown && player.y < gameHeight - halfHeight) {
+        player.setVelocityY(playerSpeed);
+        player.setVelocityX(0);
     }
 
-    return rectangles;
+    if (player.x < 0) {
+        player.x = 0;
+        player.setVelocityX(0);
+    }
+    if (player.x > gameWidth + halfWidth) {
+        player.x = gameWidth;
+        player.setVelocityX(0);
+    }
+    if (player.y < 0) {
+        player.y = 0;
+        player.setVelocityY(0);
+    }
+    if (player.y > gameHeight) {
+        player.y = gameHeight;
+        player.setVelocityY(0);
+    }
+
+    if (cursors.left.isDown && player.x > 0 + halfWidth) {
+        player.setVelocityX(-1 * playerSpeed);
+        player.setVelocityY(0);
+    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth) {
+        player.setVelocityX(playerSpeed);
+        player.setVelocityY(0);
+    }
+}
+
+function isPointOnLineSegment(point, lineStart, lineEnd) {
+    const d1 = Phaser.Math.Distance.Between(point.x, point.y, lineStart.x, lineStart.y);
+    const d2 = Phaser.Math.Distance.Between(point.x, point.y, lineEnd.x, lineEnd.y);
+    const lineLength = Phaser.Math.Distance.Between(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
+    
+    // Use a tolerance because of possible floating-point errors
+    const tolerance = 0.01;
+    
+    return Math.abs(d1 + d2 - lineLength) < tolerance;
+}
+
+function isPointOnPerimeter(point, perimeter) {
+    for (let i = 0; i < perimeter.length - 1; i++) {
+        if (isPointOnLineSegment(point, perimeter[i], perimeter[i + 1])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function isPointOnPerimeter(point, perimeter) {
+    for (let i = 0; i < perimeter.length - 1; i++) {
+        if (isPointOnLineSegment(point, perimeter[i], perimeter[i + 1])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+
+function maskPolygon() {
+    // Create the polygon
+    
+    // TODO - create the polygon, only call this once a path has been "completed"
+    var polygon = new Phaser.Geom.Polygon(polygonPoints);
+
+    // Create the geometry mask using the polygon
+    var mask = this.make.graphics({x: 0, y: 0, add: false});
+    mask.fillStyle(0xffffff);
+    mask.beginPath();
+    mask.moveTo(polygonPoints[0].x, polygonPoints[0].y);
+    for (var i = 1; i < polygonPoints.length; i++) {
+        mask.lineTo(polygonPoints[i].x, polygonPoints[i].y);
+    }
+    mask.closePath();
+    mask.fillPath();
+
+    // Create the mask and invert it
+    var geometryMask = new Phaser.Display.Masks.GeometryMask(this, mask);
+    geometryMask.invertAlpha = true;
+
+    // Apply the mask to the background image
+    bg.setMask(geometryMask);
+}
+
+
+function getCompletedPath(reducedTrailPoints, perimeter) {
+    // 1. Find the position of the first and last points in the `trailPoints` array on the `perimeter` array
+    const startPoint = reducedTrailPoints[0];
+    const endPoint = reducedTrailPoints[reducedTrailPoints.length - 1];
+
+    const startIndex = perimeter.findIndex(point => point.x === startPoint.x && point.y === startPoint.y);
+    const endIndex = perimeter.findIndex(point => point.x === endPoint.x && point.y === endPoint.y);
+
+    // 2. Extract the two potential sub-paths on the perimeter between the start and end points
+    let path1, path2;
+    if (startIndex < endIndex) {
+        path1 = perimeter.slice(startIndex, endIndex + 1);
+        path2 = [ ...perimeter.slice(0, startIndex + 1), ...perimeter.slice(endIndex) ];
+    } else {
+        path1 = perimeter.slice(endIndex, startIndex + 1);
+        path2 = [ ...perimeter.slice(0, endIndex + 1), ...perimeter.slice(startIndex) ];
+    }
+
+    // 3. Calculate the lengths of these two sub-paths
+    const length1 = calculatePathLength(path1);
+    const length2 = calculatePathLength(path2);
+
+    // 4. Combine the shortest sub-path with the trail points to create the final path
+    let finalPath;
+    if (length1 <= length2) {
+        finalPath = [...path1, ...reducedTrailPoints.slice(1)];
+    } else {
+        finalPath = [...path2, ...reducedTrailPoints.slice(1)];
+    }
+
+    return finalPath;
+}
+
+// Function to calculate the total length of a path given a list of points
+function calculatePathLength(path) {
+    let length = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+        let dx = path[i].x - path[i+1].x;
+        let dy = path[i].y - path[i+1].y;
+        length += Math.sqrt(dx * dx + dy * dy);
+    }
+    return length;
 }
