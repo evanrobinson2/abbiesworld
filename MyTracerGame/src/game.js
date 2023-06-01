@@ -483,5 +483,5 @@ function destroyPolygon() {
       polygon.destroy(); // Destroy the graphics object
       polygon = null; // Reset the polygon variable
     }
-  }
+  } 
   
