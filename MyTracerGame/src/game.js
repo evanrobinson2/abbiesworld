@@ -2,7 +2,7 @@ var gameWidth = 1232;
 var gameHeight = 928;
 var player;
 var playerSpeed = 300;
-var completePath;
+var completePath_cw;
 var polygon;
 
 var goon1;
@@ -76,7 +76,7 @@ function create() {
     // Create foreground image
     foreground = this.add.image(gameWidth / 2, gameHeight / 2, 'foreground').setDepth(0);
     maskGraphics = this.add.graphics();
-    console.log(maskGraphics);
+    // console.log(maskGraphics);
 
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
@@ -178,10 +178,10 @@ function update() {
     {
         trailPoints.push(currentPoint);
         console.log('Returned to Perimeter!');
-        completePath = getCompletedPath(reducePoints(trailPoints), perimeter);
-        console.log(reducePoints(trailPoints));
-        console.log('Complete path: ' + JSON.stringify(completePath));
+        completePath_cw = getCompletedPath_Clockwise(reducePoints(trailPoints), perimeter);
+        completePath_ccw = getCompletedPath_CounterClockwise(reducePoints(trailPoints), perimeter);
 
+        
         priorPath = trailPoints;
         trailPoints = []; 
     }
@@ -319,104 +319,8 @@ function isPointOnPerimeter(point, perimeter) {
     return false;
 }
 
-// not to be tested yet. may not apply
-// function maskPolygon(points) {
-//     // Create the polygon
-    
-//     // TODO - create the polygon, only call this once a path has been "completed"
-//     var polygon = new Phaser.Geom.Polygon(polygonPoints);
-
-//     // Create the geometry mask using the polygon
-//     var mask = this.make.graphics({x: 0, y: 0, add: false});
-//     mask.fillStyle(0xffffff);
-//     mask.beginPath();
-//     mask.moveTo(polygonPoints[0].x, polygonPoints[0].y);
-//     for (var i = 1; i < polygonPoints.length; i++) {
-//         mask.lineTo(polygonPoints[i].x, polygonPoints[i].y);
-//     }
-//     mask.closePath();
-//     mask.fillPath();
-
-//     // Create the mask and invert it
-//     var geometryMask = new Phaser.Display.Masks.GeometryMask(this, mask);
-//     geometryMask.invertAlpha = true;
-
-//     // Apply the mask to the foreground image
-//     bg.setMask(geometryMask);
-// }
-
-
-function getCompletedPath(reducedTrailPoints, perimeter) {
-    // Get the indices of the departure and return points
-    let departureIndex = -1, returnIndex = -1;
-    // TODO FIX THIS CODE >> THE PROBLEM HERE IS THAT IS POINT ON LINE SEGMENT IS NOT ACCEPTING WHEN A PLAYER FINISHES PATH ON TOP Y AXIS
-    for (let i = 0; i < perimeter.length - 1; i++) {
-        let p1 = perimeter[i];
-        let p2 = perimeter[i + 1];
-        if (isPointOnLineSegment(reducedTrailPoints[0], p1, p2)) {
-            departureIndex = i;
-        }
-        if (isPointOnLineSegment(reducedTrailPoints[reducedTrailPoints.length - 1], p1, p2)) {
-            returnIndex = i;
-        }
-    }
-
-    if (departureIndex === -1 || returnIndex === -1) {
-        console.error("Couldn't find departure or return index in getCompletedPath()");
-        return;
-    }
-
-    // Create the two possible paths using the player's trail and the original perimeter
-    let path1 = [];
-    let path2 = [];
-
-    // Path 1 (Clockwise)
-    let i = departureIndex;
-    while (i !== returnIndex) {
-        path1.push(perimeter[i]);
-        i = (i + 1) % perimeter.length;  // wrap around if needed
-    }
-    reducedTrailPoints.forEach(p => path1.push(p));
-
-    // Path 2 (Counterclockwise)
-    i = returnIndex;
-    while (i !== departureIndex) {
-        path2.push(perimeter[i]);
-        i = (i - 1 + perimeter.length) % perimeter.length; // wrap around if needed
-    }
-    reducedTrailPoints.slice().reverse().forEach(p => path2.push(p));
-
-    // Determine which path results in a smaller area
-    let polygon1 = new Phaser.Geom.Polygon(path1);
-    let polygon2 = new Phaser.Geom.Polygon(path2);
-
-    // console.log( checkPolygonPoints(polygon1.points) );
-    // console.log( checkPolygonPoints(polygon2.points) );
-
-    const area1 = calculatePolygonArea(polygon1);
-    const area2 = calculatePolygonArea(polygon2);
-
-    // console.log('Path 1:');
-    // console.log(polygon1.points);
-    // console.log('Path 2:');
-    // console.log(polygon2.points);
-
-    // console.log(`area1: ${area1}`);
-    // console.log(`area2: ${area2}`);
-
-    if (area1 < area2) {
-        return path1;
-    } else {
-        return path2;
-    }
-}
-
-function calculatePolygonArea(polygon1) {
+function calculatePolygonArea(vertices) {
     let total = 0;
-
-    // Access the vertices array of the polygon
-    vertices = polygon1.points;
-    // print(vertices);
     
     // Print each vertex to the console
     for (let i = 0; i < vertices.length; i++) {
@@ -549,8 +453,14 @@ function destroyPolygon() {
 
 
 function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
-    let departureIndex = -1, returnIndex = -1;
+    console.log('Attempting to complete the CLOCKWISE path!');
+    console.log('Trailpoints:');
+    console.log(reducedTrailPoints);
+    console.log('Perimeter:');
+    console.log(perimeter);
 
+    let departureIndex = -1, returnIndex = -1;
+    
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
         let p2 = perimeter[(i + 1) % perimeter.length];
@@ -583,21 +493,22 @@ function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
         i = (i + 1) % perimeter.length;
     }
     completedPath.push(perimeter[i]);
-    for (i = 0; i < completedPath.length; i++) {
-        console.log('reading completed path: i='+i+' ('+completedPath[i].x+','+completedPath[i].y+')');
-    }
 
     for (let i = 0; i < reducedTrailPoints.length; i++) {
         completedPath.push(reducedTrailPoints[i]);
-        console.log('pushing reducedTrailPoints[i] into completed path i='+i+' ('+completedPath[i].x+','+completedPath[i].y+')');        
     }
 
     return completedPath;
 }
 
 function getCompletedPath_CounterClockwise(reducedTrailPoints, perimeter) {
+    console.log('Attempting to complete the COUNTER-CLOCKWISE path!');
+    console.log('Trailpoints:');
+    console.log(reducedTrailPoints);
+    console.log('Perimeter:');
+    console.log(perimeter);
+        
     let departureIndex = -1, returnIndex = -1;
-
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
         let p2 = perimeter[(i + 1) % perimeter.length];
@@ -615,21 +526,32 @@ function getCompletedPath_CounterClockwise(reducedTrailPoints, perimeter) {
     }
 
     let completedPath = [];
-    // Start at the departure point
-    completedPath.push(reducedTrailPoints[0]);
-
-    // Going counter-clockwise, start from departureIndex and end before returnIndex
-    let i = (departureIndex - 1 + perimeter.length) % perimeter.length;
-    while (i != returnIndex) {
-        completedPath.push(perimeter[i]);
-        i = (i - 1 + perimeter.length) % perimeter.length;
-    }
 
     // Add the player's path (reversed) to the completedPath
     let reversedTrailPoints = reducedTrailPoints.slice().reverse(); // copy and reverse the array
     for (let i = 0; i < reversedTrailPoints.length; i++) {
         completedPath.push(reversedTrailPoints[i]);
     }
+
+    // TODO I'm debugging in here
+    console.log('Departure index: ' + departureIndex);
+    console.log(perimeter[departureIndex]);
+
+    for (i = (departureIndex +1) % perimeter.length;  i < 10; i++  ) {
+        console.log(perimeter)
+    }
+
+
+    // // Going counter-clockwise, start from departureIndex and end before returnIndex
+    // let i = (departureIndex + 1) % perimeter.length;
+    // while (i != returnIndex+1) {
+    //     completedPath.push(perimeter[i]);
+    //     i = (i - 1 + perimeter.length) % perimeter.length;
+    // }
+
+
+    // Start at the departure point
+    completedPath.push(reducedTrailPoints[reducedTrailPoints.length-1]);
 
     return completedPath;
 }
