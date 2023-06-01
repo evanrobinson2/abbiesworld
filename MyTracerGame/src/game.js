@@ -314,7 +314,7 @@ function isPointOnPerimeter(point, perimeter) {
 }
 
 // not to be tested yet. may not apply
-// function maskPolygon() {
+// function maskPolygon(points) {
 //     // Create the polygon
     
 //     // TODO - create the polygon, only call this once a path has been "completed"
@@ -423,30 +423,81 @@ function calculatePolygonArea(polygon1) {
     }
     console.log('total = ' + Math.abs(total) / 2);
     return Math.abs(total) / 2;
-  }
+}
+function drawCircles(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
+    const offset = 50; // Define the offset distance
 
-function drawCircles(points) {
-    points.forEach((point) => {
+    points.forEach((point, index) => {
         const circle = scene.add.graphics();
 
-        circle.lineStyle(5, 0x000000); // Set black outline
-        circle.fillStyle(0xff0000); // Set white fill
+        circle.lineStyle(5, strokeColor); // Set black outline
+        circle.fillStyle(fillColor); // Set red fill
 
-        circle.strokeCircle(point.x, point.y, 5); // Draw circle outline at the specified point
-        circle.fillCircle(point.x, point.y, 5); // Draw filled circle at the specified point
+        circle.strokeCircle(point.x, point.y, diameter); // Draw circle outline at the specified point
+        circle.fillCircle(point.x, point.y, diameter); // Draw filled circle at the specified point
 
-        const tween = scene.tweens.add({
-        targets: circle.scale,
-        scaleX: 2, // Scale X to 2 (double the size)
-        scaleY: 2, // Scale Y to 2 (double the size)
-        duration: 500, // Duration of the tween in milliseconds
-        yoyo: true, // Play the tween in reverse
-        repeat: -1 // Repeat indefinitely
+        // Check if the point is near the corners, and adjust the position of the text accordingly
+        let textX = point.x;
+        let textY = point.y;
+
+        if (point.x < offset) {
+            textX += offset;
+        } else if (point.x > gameWidth - offset) {
+            textX -= offset;
+        }
+
+        if (point.y < offset) {
+            textY += offset;
+        } else if (point.y > gameHeight - offset) {
+            textY -= offset;
+        }
+
+        // Add the index as text
+        const text = scene.add.text(textX, textY, index.toString(), { 
+            color: '#' + textColor.toString(16).padStart(6, '0'),
+            fontSize: '20px', // Set the font size to 20 pixels
+            fontWeight: 'bold', // Set the font weight to bold
+            stroke: '#000000', // Set the text outline color to black
+            strokeThickness: 2 // Set the text outline thickness
         });
-        tween.play(); // Explicitly start the tween
-        circles.push({ circle, tween }); // Add the circle and its tween to the array
+        text.setOrigin(0.5, 0.5); // Center the text
+
+        circles.push({ circle, text }); // Add the circle and its text to the array
     });
 }
+
+function checkPolygonPoints(points) {
+    let length = points.length;
+
+    // Check for minimum 4 points (with first and last being same)
+    if (length < 4) {
+        return {pass: false, details: "There should be at least 4 points (with first and last being the same)."};
+    }
+
+    // Check if the first and last points are same
+    if (points[0].x !== points[length - 1].x || points[0].y !== points[length - 1].y) {
+        return {pass: false, details: "The first and last points must be the same."};
+    }
+
+    // Calculate the signed area
+    let signedArea = 0;
+    for (let i = 0; i < length - 1; i++) {
+        let x1 = points[i].x;
+        let y1 = points[i].y;
+        let x2 = points[i + 1].x;
+        let y2 = points[i + 1].y;
+        signedArea += (x1 * y2 - x2 * y1);
+    }
+    signedArea *= 0.5;
+
+    if (signedArea === 0) {
+        return {pass: false, details: "The points do not form a polygon (they may all lie on a single line)."};
+    }
+
+    return {pass: true, details: "All conditions for Shoelace formula are met."};
+}
+
+
 
 function clearCircles() {
     circles.forEach(({ circle, tween }) => {
@@ -455,12 +506,12 @@ function clearCircles() {
     });
   
     circles = []; // Clear the array
-  }
+}
 
 function drawPolygon(points, color = "#FF0000", fill = false) {
     polygon = scene.add.graphics();
 
-    polygon.lineStyle(5, 0x000000); // Set black outline
+    polygon.lineStyle(5, color); // Set black outline
     polygon.fillStyle(color); // Set fill color
 
     polygon.beginPath();
@@ -483,5 +534,5 @@ function destroyPolygon() {
       polygon.destroy(); // Destroy the graphics object
       polygon = null; // Reset the polygon variable
     }
-  }
+}
   
