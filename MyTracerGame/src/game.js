@@ -2,7 +2,8 @@ var gameWidth = 1232;
 var gameHeight = 928;
 var player;
 var playerSpeed = 300;
-var completePath_cw;
+var completePath_cw = [];
+var completePath_ccw = [];
 var polygon;
 
 var goon1;
@@ -30,7 +31,7 @@ var isPaused = false;
 var foreground;
 var background;
 var goonSpeed = 200; // Initial speed of the goons
-var goonRotationSpeed = 0.1; // Rotation speed multiplier
+var goonRotationSpeed = 0.3; // Rotation speed multiplier
 var goonSpeedIncrease = 0.001; // Speed increase on bounce
 var isSafe = true;
 
@@ -92,7 +93,7 @@ function create() {
     goon1.setVelocity(200, 150);
     goon1.setBounce(1);
     goon1.setCollideWorldBounds(true);
-    goon1.setAngularVelocity(goon1.body.velocity.x * goonRotationSpeed);
+    goon1.setAngularVelocity(goonRotationSpeed);
     goon1.setDepth(2);
 
     goon2 = scene.physics.add.sprite(gameWidth / 2, 0, 'goon2');
@@ -100,7 +101,7 @@ function create() {
     goon2.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
     goon2.setBounce(1);
     goon2.setCollideWorldBounds(true);
-    goon2.setAngularVelocity(goon2.body.velocity.x * goonRotationSpeed);
+    goon2.setAngularVelocity(goonRotationSpeed);
     goon2.setDepth(2);
 
     // Enable keyboard input
@@ -339,6 +340,7 @@ function calculatePolygonArea(vertices) {
     console.log('total = ' + Math.abs(total) / 2);
     return Math.abs(total) / 2;
 }
+
 function drawCircles(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
     const offset = 50; // Define the offset distance
 
@@ -381,39 +383,6 @@ function drawCircles(points, diameter = 10, fillColor = 0xff0000, strokeColor = 
     });
 }
 
-function checkPolygonPoints(points) {
-    let length = points.length;
-
-    // Check for minimum 4 points (with first and last being same)
-    if (length < 4) {
-        return {pass: false, details: "There should be at least 4 points (with first and last being the same)."};
-    }
-
-    // Check if the first and last points are same
-    if (points[0].x !== points[length - 1].x || points[0].y !== points[length - 1].y) {
-        return {pass: false, details: "The first and last points must be the same."};
-    }
-
-    // Calculate the signed area
-    let signedArea = 0;
-    for (let i = 0; i < length - 1; i++) {
-        let x1 = points[i].x;
-        let y1 = points[i].y;
-        let x2 = points[i + 1].x;
-        let y2 = points[i + 1].y;
-        signedArea += (x1 * y2 - x2 * y1);
-    }
-    signedArea *= 0.5;
-
-    if (signedArea === 0) {
-        return {pass: false, details: "The points do not form a polygon (they may all lie on a single line)."};
-    }
-
-    return {pass: true, details: "All conditions for Shoelace formula are met."};
-}
-
-
-
 function clearCircles() {
     circles.forEach(({ circle, tween }) => {
       circle.destroy(); // Destroy the graphics object
@@ -450,8 +419,6 @@ function destroyPolygon() {
     }
 }
   
-
-
 function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
     console.log('Attempting to complete the CLOCKWISE path!');
     console.log('Trailpoints:');
@@ -471,9 +438,6 @@ function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
             returnIndex = i;
         }
     }
-
-    console.log('departureIndex = ' + departureIndex);
-    console.log('returnIndex = ' + returnIndex);
     
     if (departureIndex === -1 || returnIndex === -1) {
         console.error("Couldn't find departure or return index in getCompletedPath()");
@@ -483,13 +447,11 @@ function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
     let completedPath = [];
     // Start at the return point
     completedPath.push(reducedTrailPoints[reducedTrailPoints.length - 1]);
-    console.log('pushing reducedTrailPoints[reducedTrailPoints.length - 1] into completed path ('+completedPath[0].x+','+completedPath[0].y+')');
 
     // Going clockwise, start from returnIndex and end before departureIndex
     let i = (returnIndex + 1) % perimeter.length;
     while (i != departureIndex) {
         completedPath.push(perimeter[i]);
-        console.log('pushing perimeter into completed path i='+i+' ('+completedPath[i].x+','+completedPath[i].y+')');        
         i = (i + 1) % perimeter.length;
     }
     completedPath.push(perimeter[i]);
@@ -502,6 +464,7 @@ function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
 }
 
 function getCompletedPath_CounterClockwise(reducedTrailPoints, perimeter) {
+
     console.log('Attempting to complete the COUNTER-CLOCKWISE path!');
     console.log('Trailpoints:');
     console.log(reducedTrailPoints);
@@ -509,6 +472,7 @@ function getCompletedPath_CounterClockwise(reducedTrailPoints, perimeter) {
     console.log(perimeter);
         
     let departureIndex = -1, returnIndex = -1;
+
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
         let p2 = perimeter[(i + 1) % perimeter.length];
@@ -535,22 +499,21 @@ function getCompletedPath_CounterClockwise(reducedTrailPoints, perimeter) {
 
     // TODO I'm debugging in here
     console.log('Departure index: ' + departureIndex);
-    console.log(perimeter[departureIndex]);
+    console.log('Perimeter at departureIndex: (' + perimeter[departureIndex].x + ', ' + perimeter[departureIndex].y + ')');
 
-    for (i = (departureIndex +1) % perimeter.length;  i < 10; i++  ) {
-        console.log(perimeter)
-    }
+    console.log('Return index: ' + returnIndex);
+    console.log('Perimeter at returnIndex: (' + perimeter[returnIndex].x + ', ' + perimeter[returnIndex].y + ')');
 
+    i = returnIndex;
 
-    // // Going counter-clockwise, start from departureIndex and end before returnIndex
-    // let i = (departureIndex + 1) % perimeter.length;
-    // while (i != returnIndex+1) {
+    // while (i != departureIndex)
+    // {
+    //     console.log('i= ' + i + '. Pushing perimeter point to CompletedPath. COUNTER-CLOCKWISE:');
+    //     console.log(perimeter[i]);
     //     completedPath.push(perimeter[i]);
-    //     i = (i - 1 + perimeter.length) % perimeter.length;
+    //     i--;
+    //     i = i % perimeter.length;
     // }
-
-
-    // Start at the departure point
     completedPath.push(reducedTrailPoints[reducedTrailPoints.length-1]);
 
     return completedPath;

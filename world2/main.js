@@ -167,7 +167,7 @@ function movePlayerToNextWaypoint() {
     duration: duration,
     onComplete: function () {
       playerMoving = false;
-      checkPlayerCloseToGoon();
+      // checkPlayerCloseToGoon();
     }
   });
 }
