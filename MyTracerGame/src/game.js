@@ -196,8 +196,13 @@ function update() {
         console.log('Area of perimeter: ' + Math.abs(area));
         console.log('Assertion check: ' + (Math.abs(rightHandArea) + Math.abs(leftHandArea))+ "=" + area);
 
-
-        
+        // carves the polygon from the foreground.
+        if ( rightHandArea < leftHandArea )
+        {
+            createMask( rightHandPath, scene, foreground );
+        } else {
+            createMask( leftHandPath, scene, foreground );
+        }
 
         priorPath = trailPoints;
         trailPoints = []; 
@@ -407,25 +412,7 @@ function clearCircles() {
     circles = []; // Clear the array
 }
 
-function drawPolygon(points, color = "#FF0000", fill = false) {
-    polygon = scene.add.graphics();
 
-    polygon.lineStyle(5, parseInt(color.slice(1), 16)); // Set stroke color and line width
-    polygon.fillStyle(color); // Set fill color
-    polygon.beginPath();
-    polygon.moveTo(points[0].x, points[0].y); // Move to the first point
-
-    for (let i = 1; i < points.length; i++) {
-        polygon.lineTo(points[i].x, points[i].y); // Draw lines to subsequent points
-    }
-
-    polygon.closePath(); // Close the shape
-
-    polygon.strokePath(); // Draw the outline
-    if (fill) { polygon.fillPath() }; // Fill the shape
-
-    return polygon;
-}
 
 function destroyPolygon() {
     if (polygon) {
@@ -562,3 +549,42 @@ function getRandomVibrantColor() {
     return luminance;
   }
   
+function createMask( polygonPoints, scene, worldObject ) {
+    // Create the geometry mask using the polygon
+    var mask = scene.make.graphics({x: 0, y: 0, add: false});
+    mask.fillStyle(0xffffff);
+    mask.beginPath();
+    mask.moveTo(polygonPoints[0].x, polygonPoints[0].y);
+    for (var i = 1; i < polygonPoints.length; i++) {
+        mask.lineTo(polygonPoints[i].x, polygonPoints[i].y);
+    }
+    mask.closePath();
+    mask.fillPath();
+
+    // Create the mask and invert it
+    var geometryMask = new Phaser.Display.Masks.GeometryMask(scene, mask);
+    geometryMask.invertAlpha = true;
+
+    // Apply the mask to the background image
+    worldObject.setMask(geometryMask);
+}
+
+function drawPolygon(points, color = "#FF0000", fill = false) {
+    polygon = scene.add.graphics();
+
+    polygon.lineStyle(5, parseInt(color.slice(1), 16)); // Set stroke color and line width
+    polygon.fillStyle(color); // Set fill color
+    polygon.beginPath();
+    polygon.moveTo(points[0].x, points[0].y); // Move to the first point
+
+    for (let i = 1; i < points.length; i++) {
+        polygon.lineTo(points[i].x, points[i].y); // Draw lines to subsequent points
+    }
+
+    polygon.closePath(); // Close the shape
+
+    polygon.strokePath(); // Draw the outline
+    if (fill) { polygon.fillPath() }; // Fill the shape
+
+    return polygon;
+}
