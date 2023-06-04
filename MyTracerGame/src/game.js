@@ -5,7 +5,7 @@ var playerSpeed = 300;
 var rightHandPath = [];
 var leftHandPath = [];
 var polygon;
-
+let smallerPath;
 var goon1;
 var goon1Velocity;
 var goon2;
@@ -199,10 +199,22 @@ function update() {
         // carves the polygon from the foreground.
         if ( rightHandArea < leftHandArea )
         {
+            smallerPath = rightHandPath;
             createMask( rightHandPath, scene, foreground );
         } else {
+            smallerPath = leftHandPath;
             createMask( leftHandPath, scene, foreground );
         }
+
+
+        console.log("smallerPath.length = " + smallerPath.length); // Log the entire array
+        console.log(smallerPath); // Log the first element        
+
+        // new code
+        // fix the perimeter
+        perimeter = updatePerimeter(perimeter, smallerPath);
+
+
 
         priorPath = trailPoints;
         trailPoints = []; 
@@ -587,4 +599,29 @@ function drawPolygon(points, color = "#FF0000", fill = false) {
     if (fill) { polygon.fillPath() }; // Fill the shape
 
     return polygon;
+}
+
+function updatePerimeter(perimeter, smallerPath) {
+    let newPerimeter = [];
+    let addFromPerimeter = true;
+
+    for (let point of perimeter) {
+        if (addFromPerimeter) {
+            newPerimeter.push(point);
+
+            if (pointEquals(point, smallerPath[0])) {
+                addFromPerimeter = false;
+                for (let innerPoint of smallerPath.slice(1)) {
+                    newPerimeter.push(innerPoint);
+                }
+            }
+        } else if (pointEquals(point, smallerPath[smallerPath.length - 1])) {
+            addFromPerimeter = true;
+        }
+    }
+    return newPerimeter;
+}
+
+function pointEquals(pointA, pointB) {
+    return pointA.x === pointB.x && pointA.y === pointB.y;
 }
