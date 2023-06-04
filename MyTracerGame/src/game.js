@@ -4,7 +4,6 @@ var player;
 var playerSpeed = 300;
 var rightHandPath = [];
 var leftHandPath = [];
-var polygon;
 let smallerPath;
 var goon1;
 var goon1Velocity;
@@ -22,6 +21,9 @@ var perimeter = [
 { x: gameWidth, y: gameHeight },
 { x: 0, y: gameHeight }
 ];
+
+var maskContainer;
+var polygonContainer = [];
 
 var numRectangles = 0;
 var numPoints = 0;
@@ -69,7 +71,7 @@ function create() {
     // Create game objects and initialize the game here
     scene = this;
 
-    
+    maskContainer = scene.make.graphics({ x: 0, y: 0, add: false });
     // Create background image
     background = scene.add.image(0, 0, 'background').setOrigin(0);
     background.setDepth(-1);
@@ -77,7 +79,7 @@ function create() {
     // Create foreground image
     foreground = this.add.image(gameWidth / 2, gameHeight / 2, 'foreground').setDepth(0);
     maskGraphics = this.add.graphics();
-    // console.log(maskGraphics);
+    
 
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
@@ -150,6 +152,8 @@ function update() {
     var currentPoint = { x: player.x, y: player.y };
     var lastPoint = trailPoints[trailPoints.length - 1];
 
+    // console.log(currentPoint);
+    // console.log(perimeter);
     isSafe = isPointOnPerimeter( currentPoint, perimeter );
 
     // check if the player is not safe. In which case store their path!
@@ -168,6 +172,10 @@ function update() {
             }
         }
     }
+    else
+    {
+        lineGraphics.clear();
+    }
 
     if (isSafe && trailPoints.length == 0) { 
         trailPoints[0] = (currentPoint); 
@@ -182,48 +190,43 @@ function update() {
         rightHandPath = getRightHandPath(reducePoints(trailPoints), perimeter);
         leftHandPath = getLeftHandPath(reducePoints(trailPoints), perimeter);
 
-        drawPolygon(rightHandPath, getRandomVibrantColor());
-        drawPolygon(leftHandPath, getRandomVibrantColor());
+        // drawPolygon(rightHandPath, getRandomVibrantColor());
+        // drawPolygon(leftHandPath, getRandomVibrantColor());
     
-        // Calculate areas
-        let leftHandArea = new Phaser.Geom.Polygon(leftHandPath).calculateArea();
-        let rightHandArea = new Phaser.Geom.Polygon(rightHandPath).calculateArea();
-
-        console.log("Right hand path area: " + Math.abs(rightHandArea));
-        console.log("Left hand path area: " + Math.abs(leftHandArea));
-
-        let area = new Phaser.Geom.Polygon(perimeter).area;
-        console.log('Area of perimeter: ' + Math.abs(area));
-        console.log('Assertion check: ' + (Math.abs(rightHandArea) + Math.abs(leftHandArea))+ "=" + area);
-
+        let leftHandArea = Math.abs(new Phaser.Geom.Polygon(leftHandPath).calculateArea());
+        let rightHandArea = Math.abs(new Phaser.Geom.Polygon(rightHandPath).calculateArea());
+        
+        // console.log("Right hand path area: " + rightHandArea);
+        // console.log("Left hand path area: " + leftHandArea);
+        // console.log("rightHandArea < leftHandArea: " + (rightHandArea < leftHandArea));
+        
+        // let area = Math.abs(new Phaser.Geom.Polygon(perimeter).area);
+        // console.log('Area of perimeter: ' + area);
+        // console.log('Assertion check: ' + (rightHandArea + leftHandArea) + "=" + area + " = " + (rightHandArea + leftHandArea == area));
+        
+        clearPolygon("perimeter");
         // carves the polygon from the foreground.
-        if ( rightHandArea < leftHandArea )
-        {
-            smallerPath = rightHandPath;
-            createMask( rightHandPath, scene, foreground );
+        if (rightHandArea < leftHandArea) {
+            console.log("Selecting RightHandArea for masking.");
+            createMask(rightHandPath, maskContainer, scene, foreground);
+            perimeter = leftHandPath;            
         } else {
-            smallerPath = leftHandPath;
-            createMask( leftHandPath, scene, foreground );
+            console.log("Selecting LeftHandArea for masking.");
+            createMask(leftHandPath, maskContainer, scene, foreground);
+            perimeter = rightHandPath;
         }
+        drawPolygon("perimeter", perimeter);
+        
 
-
-        console.log("smallerPath.length = " + smallerPath.length); // Log the entire array
-        console.log(smallerPath); // Log the first element        
-
-        // new code
-        // fix the perimeter
-        perimeter = updatePerimeter(perimeter, smallerPath);
-
-
-
+        // console.log(perimeter);
+        
         priorPath = trailPoints;
         trailPoints = []; 
     }
 
     // Update goons' rotation based on velocity
     goon1.setAngularVelocity(goon1.body.velocity.x * goonRotationSpeed);
-    goon2.setAngularVelocity(goon2.body.velocity.x * goonRotationSpeed);
-  
+    goon2.setAngularVelocity(goon2.body.velocity.x * goonRotationSpeed);  
 }
 
 function writeUI() {
@@ -244,50 +247,6 @@ function togglePause() {
     }
 }
 
-function reducePoints(points) {
-    if (points.length < 2) {
-      return points; // If there are less than 2 points, there's nothing to reduce.
-    }
-  
-    // Array to store the reduced points
-    let reducedPoints = [points[0]];
-  
-    // Determine initial direction
-    let direction;
-    if (points[0].x === points[1].x) {
-      direction = 'y';
-    } else if (points[0].y === points[1].y) {
-      direction = 'x';
-    }
-  
-    for (let i = 1; i < points.length - 1; i++) {
-      let currentPoint = points[i];
-      let nextPoint = points[i + 1];
-  
-      // Determine the current direction
-      let newDirection;
-      if (currentPoint.x === nextPoint.x) {
-        newDirection = 'y';
-      } else if (currentPoint.y === nextPoint.y) {
-        newDirection = 'x';
-      }
-  
-      // If there's a change in direction, add the current point to the reducedPoints
-      if (newDirection !== direction) {
-        reducedPoints.push(currentPoint);
-        direction = newDirection;
-      }
-    }
-  
-    // Add the last point if it's not already added
-    if (!reducedPoints.includes(points[points.length - 1])) {
-      reducedPoints.push(points[points.length - 1]);
-    }
-  
-    return reducedPoints;
-  }
-  
-
 function handlePlayerMovement() {
     // Handle player movement with extended bounds
     var halfWidth = player.displayWidth / 2;
@@ -299,6 +258,29 @@ function handlePlayerMovement() {
     } else if (cursors.down.isDown && player.y < gameHeight - halfHeight) {
         player.setVelocityY(playerSpeed);
         player.setVelocityX(0);
+    }
+
+    if (!player || !perimeter) {
+        // Check if the player is on a point not inside the perimeter and not on the perimeter
+        var playerPoint = new Phaser.Geom.Point(player.x, player.y);
+        var isOutsidePerimeter = !Phaser.Geom.Polygon.ContainsPoint(perimeter, playerPoint);
+        var isNotOnPerimeter = !Phaser.Geom.Polygon.OnEdge(perimeter, playerPoint);
+        console.log("checking if player is in a valid location");
+        if (isOutsidePerimeter && isNotOnPerimeter) {
+            // Player is on a point outside the perimeter, handle the logic here
+            // ...
+            console.log("Player is outside the perimeter!");
+
+            // Find the closest point along the perimeter to the player
+            var closestPoint = getClosestPointOnPerimeter(playerPoint, perimeter);
+
+            // Set the player's X and Y coordinates to the closest point
+            player.x = closestPoint.x;
+            player.y = closestPoint.y;
+
+            player.setVelocityX(0);
+            player.setVelocityY(0);
+        }
     }
 
     if (player.x < 0) {
@@ -327,54 +309,8 @@ function handlePlayerMovement() {
     }
 }
 
-function isPointOnLineSegment(point, lineStart, lineEnd) {
-    const d1 = Phaser.Math.Distance.Between(point.x, point.y, lineStart.x, lineStart.y);
-    const d2 = Phaser.Math.Distance.Between(point.x, point.y, lineEnd.x, lineEnd.y);
-    const lineLength = Phaser.Math.Distance.Between(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
-    
-    // Use a tolerance because of possible floating-point errors
-    const tolerance = 0.01;
-    
-    return Math.abs(d1 + d2 - lineLength) < tolerance;
-}
 
-function isPointOnPerimeter(point, perimeter) {
-    for (let i = 0; i < perimeter.length - 1; i++) {
-        if (isPointOnLineSegment(point, perimeter[i], perimeter[i + 1])) {
-            return true;
-        }
-    }
-    
-    // check for the case where the point is on the line segment formed by the last point and the first point
-    if (isPointOnLineSegment(point, perimeter[perimeter.length - 1], perimeter[0])) {
-        return true;
-    }
-    
-    return false;
-}
-
-function calculatePolygonArea(vertices) {
-    let total = 0;
-    
-    // Print each vertex to the console
-    for (let i = 0; i < vertices.length; i++) {
-      const vertex = vertices[i];
-      console.log(`Vertex ${i + 1}: x = ${vertex.x}, y = ${vertex.y}`);
-    }
-
-    for (let i = 0, l = vertices.length; i < l; i++) {
-      let addX = vertices[i].x;
-      let addY = vertices[i == vertices.length - 1 ? 0 : i + 1].y;
-      let subX = vertices[i == vertices.length - 1 ? 0 : i + 1].x;
-      let subY = vertices[i].y;
-  
-      total += (addX * addY - subX * subY);
-    }
-    console.log('total = ' + Math.abs(total) / 2);
-    return Math.abs(total) / 2;
-}
-
-function drawCircles(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
+function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
     const offset = 50; // Define the offset distance
 
     points.forEach((point, index) => {
@@ -416,172 +352,34 @@ function drawCircles(points, diameter = 10, fillColor = 0xff0000, strokeColor = 
     });
 }
 
-function clearCircles() {
+function clearPoints() {
     circles.forEach(({ circle, tween }) => {
       circle.destroy(); // Destroy the graphics object
     });
   
     circles = []; // Clear the array
 }
-
-
-
-function destroyPolygon() {
-    if (polygon) {
-      polygon.destroy(); // Destroy the graphics object
-      polygon = null; // Reset the polygon variable
-    }
-}
   
-
-function getRightHandPath(playerPath, perimeter) {
-    let rightHandPath = [];
-    let returnIndex, departureIndex;
-
-    // Find indices for departure and return points in the perimeter array
-    for (let i = 0; i < perimeter.length; i++) {
-        let p1 = perimeter[i];
-        let p2 = perimeter[(i + 1) % perimeter.length];
-        if (isPointOnLineSegment(playerPath[0], p1, p2)) {
-            departureIndex = i;
-            console.log(`Departure index identified: ${departureIndex}`);
-        }
-        if (isPointOnLineSegment(playerPath[playerPath.length - 1], p1, p2)) {
-            returnIndex = i;
-            console.log(`Return index identified: ${returnIndex}`);
-        }
-    }
-
-    // Add the return point to the right-hand path
-    rightHandPath.push(playerPath[playerPath.length-1]);
-
-    // Traverse the perimeter starting from the return index
-    let i = returnIndex;
-    while (true) {
-        // Get the next point on the perimeter
-        let nextPoint = perimeter[(i + 1) % perimeter.length];
-        if (isPointOnLineSegment(playerPath[0], perimeter[i], nextPoint)) {
-            // If we reached the departure point, start adding the player path in reverse order
-            console.log(`Reached departure point, start adding player path in reverse order`);
-            for (let j = 0; j < playerPath.length; j++) {
-                rightHandPath.push(playerPath[j]);
-            }
-            break;
-        } else {
-            // If not, continue with the next point on the perimeter
-            console.log(`Adding point to right-hand path: ${JSON.stringify(nextPoint)}`);
-            rightHandPath.push(nextPoint);
-        }
-        i = (i + 1) % perimeter.length;
-    }
-
-    return rightHandPath;
-}
-
-
-function getLeftHandPath(playerPath, perimeter) {
-    let leftHandPath = [];
-    let returnIndex, departureIndex;
-
-    // Find indices for departure and return points in the perimeter array
-    for (let i = 0; i < perimeter.length; i++) {
-        let p1 = perimeter[i];
-        let p2 = perimeter[(i - 1 + perimeter.length) % perimeter.length]; // Moved to the previous point
-        if (isPointOnLineSegment(playerPath[0], p1, p2)) {
-            departureIndex = i;
-            console.log(`Departure index identified: ${departureIndex}`);
-        }
-        if (isPointOnLineSegment(playerPath[playerPath.length - 1], p1, p2)) {
-            returnIndex = i;
-            console.log(`Return index identified: ${returnIndex}`);
-        }
-    }
-
-    // Add the return point to the left-hand path
-    leftHandPath.push(playerPath[playerPath.length-1]);
-
-    // Traverse the perimeter starting from the return index
-    let i = returnIndex;
-    while (true) {
-        // Get the previous point on the perimeter
-        let prevPoint = perimeter[(i - 1 + perimeter.length) % perimeter.length]; // Moved to the previous point
-        if (isPointOnLineSegment(playerPath[0], perimeter[i], prevPoint)) {
-            // If we reached the departure point, start adding the player path in the given order
-            console.log(`Reached departure point, start adding player path in order`);
-            for (let j = 0; j < playerPath.length; j++) {
-                leftHandPath.push(playerPath[j]);
-            }
-            break;
-        } else {
-            // If not, continue with the previous point on the perimeter
-            console.log(`Adding point to left-hand path: ${JSON.stringify(prevPoint)}`);
-            leftHandPath.push(prevPoint);
-        }
-        i = (i - 1 + perimeter.length) % perimeter.length; // Moved to the previous point
-    }
-
-    return leftHandPath;
-}
-
-
-function getRandomVibrantColor() {
-    var letters = "0123456789ABCDEF";
-    var color = "";
-  
-    // Generate a random color by selecting six random hexadecimal values
-    for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-  
-    // Check the luminance of the color
-    var luminance = calculateLuminance(color);
-  
-    // If the luminance is too low, generate a new color until a vibrant one is obtained
-    while (luminance < 0.3) {
-      color = "";
-      for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      luminance = calculateLuminance(color);
-    }
-  
-    // Return the generated color
-    return "#" + color;
-  }
-  
-  // Function to calculate the luminance of a color
-  function calculateLuminance(hex) {
-    var r = parseInt(hex.substring(0, 2), 16) / 255;
-    var g = parseInt(hex.substring(2, 4), 16) / 255;
-    var b = parseInt(hex.substring(4, 6), 16) / 255;
-  
-    // Calculate the relative luminance using the sRGB color space formula
-    var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  
-    return luminance;
-  }
-  
-function createMask( polygonPoints, scene, worldObject ) {
-    // Create the geometry mask using the polygon
-    var mask = scene.make.graphics({x: 0, y: 0, add: false});
-    mask.fillStyle(0xffffff);
-    mask.beginPath();
-    mask.moveTo(polygonPoints[0].x, polygonPoints[0].y);
+function createMask(polygonPoints, container, scene, worldObject) {
+    // Add the polygon points to the container graphics object
+    container.fillStyle(0xffffff);
+    container.beginPath();
+    container.moveTo(polygonPoints[0].x, polygonPoints[0].y);
     for (var i = 1; i < polygonPoints.length; i++) {
-        mask.lineTo(polygonPoints[i].x, polygonPoints[i].y);
+        container.lineTo(polygonPoints[i].x, polygonPoints[i].y);
     }
-    mask.closePath();
-    mask.fillPath();
+    container.closePath();
+    container.fillPath();
 
     // Create the mask and invert it
-    var geometryMask = new Phaser.Display.Masks.GeometryMask(scene, mask);
+    var geometryMask = new Phaser.Display.Masks.GeometryMask(scene, container);
     geometryMask.invertAlpha = true;
 
     // Apply the mask to the background image
     worldObject.setMask(geometryMask);
 }
 
-function drawPolygon(points, color = "#FF0000", fill = false) {
+function drawPolygon(internalName, points, color = "#FF0000", fill = false, ) {
     polygon = scene.add.graphics();
 
     polygon.lineStyle(5, parseInt(color.slice(1), 16)); // Set stroke color and line width
@@ -598,30 +396,16 @@ function drawPolygon(points, color = "#FF0000", fill = false) {
     polygon.strokePath(); // Draw the outline
     if (fill) { polygon.fillPath() }; // Fill the shape
 
-    return polygon;
+    polygonContainer.push({name: internalName, polygon: polygon});
 }
 
-function updatePerimeter(perimeter, smallerPath) {
-    let newPerimeter = [];
-    let addFromPerimeter = true;
-
-    for (let point of perimeter) {
-        if (addFromPerimeter) {
-            newPerimeter.push(point);
-
-            if (pointEquals(point, smallerPath[0])) {
-                addFromPerimeter = false;
-                for (let innerPoint of smallerPath.slice(1)) {
-                    newPerimeter.push(innerPoint);
-                }
-            }
-        } else if (pointEquals(point, smallerPath[smallerPath.length - 1])) {
-            addFromPerimeter = true;
+function clearPolygon(internalName) {
+    for (let i = 0; i < polygonContainer.length; i++) {
+        if (polygonContainer[i].name === internalName) {
+            polygonContainer[i].polygon.clear(); // Clear the polygon
+            polygonContainer[i].polygon.destroy();
+            polygonContainer.splice(i, 1); // Remove the polygon from the container
+            break;
         }
     }
-    return newPerimeter;
-}
-
-function pointEquals(pointA, pointB) {
-    return pointA.x === pointB.x && pointA.y === pointB.y;
 }
