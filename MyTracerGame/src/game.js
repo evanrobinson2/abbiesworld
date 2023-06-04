@@ -2,8 +2,8 @@ var gameWidth = 1232;
 var gameHeight = 928;
 var player;
 var playerSpeed = 300;
-var completePath_cw = [];
-var completePath_ccw = [];
+var rightHandPath = [];
+var leftHandPath = [];
 var polygon;
 
 var goon1;
@@ -179,10 +179,26 @@ function update() {
     {
         trailPoints.push(currentPoint);
         console.log('Returned to Perimeter!');
-        completePath_cw = getCompletedPath_Clockwise(reducePoints(trailPoints), perimeter);
-        completePath_ccw = getCompletedPath_CounterClockwise(reducePoints(trailPoints), perimeter);
+        rightHandPath = getRightHandPath(reducePoints(trailPoints), perimeter);
+        leftHandPath = getLeftHandPath(reducePoints(trailPoints), perimeter);
+
+        drawPolygon(rightHandPath, getRandomVibrantColor());
+        drawPolygon(leftHandPath, getRandomVibrantColor());
+    
+        // Calculate areas
+        let leftHandArea = new Phaser.Geom.Polygon(leftHandPath).calculateArea();
+        let rightHandArea = new Phaser.Geom.Polygon(rightHandPath).calculateArea();
+
+        console.log("Right hand path area: " + Math.abs(rightHandArea));
+        console.log("Left hand path area: " + Math.abs(leftHandArea));
+
+        let area = new Phaser.Geom.Polygon(perimeter).area;
+        console.log('Area of perimeter: ' + Math.abs(area));
+        console.log('Assertion check: ' + (Math.abs(rightHandArea) + Math.abs(leftHandArea))+ "=" + area);
+
 
         
+
         priorPath = trailPoints;
         trailPoints = []; 
     }
@@ -394,9 +410,8 @@ function clearCircles() {
 function drawPolygon(points, color = "#FF0000", fill = false) {
     polygon = scene.add.graphics();
 
-    polygon.lineStyle(5, color); // Set black outline
+    polygon.lineStyle(5, parseInt(color.slice(1), 16)); // Set stroke color and line width
     polygon.fillStyle(color); // Set fill color
-
     polygon.beginPath();
     polygon.moveTo(points[0].x, points[0].y); // Move to the first point
 
@@ -419,102 +434,131 @@ function destroyPolygon() {
     }
 }
   
-function getCompletedPath_Clockwise(reducedTrailPoints, perimeter) {
-    console.log('Attempting to complete the CLOCKWISE path!');
-    console.log('Trailpoints:');
-    console.log(reducedTrailPoints);
-    console.log('Perimeter:');
-    console.log(perimeter);
 
-    let departureIndex = -1, returnIndex = -1;
-    
+function getRightHandPath(playerPath, perimeter) {
+    let rightHandPath = [];
+    let returnIndex, departureIndex;
+
+    // Find indices for departure and return points in the perimeter array
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
         let p2 = perimeter[(i + 1) % perimeter.length];
-        if (isPointOnLineSegment(reducedTrailPoints[0], p1, p2)) {
+        if (isPointOnLineSegment(playerPath[0], p1, p2)) {
             departureIndex = i;
+            console.log(`Departure index identified: ${departureIndex}`);
         }
-        if (isPointOnLineSegment(reducedTrailPoints[reducedTrailPoints.length - 1], p1, p2)) {
+        if (isPointOnLineSegment(playerPath[playerPath.length - 1], p1, p2)) {
             returnIndex = i;
+            console.log(`Return index identified: ${returnIndex}`);
         }
     }
-    
-    if (departureIndex === -1 || returnIndex === -1) {
-        console.error("Couldn't find departure or return index in getCompletedPath()");
-        return;
-    }
 
-    let completedPath = [];
-    // Start at the return point
-    completedPath.push(reducedTrailPoints[reducedTrailPoints.length - 1]);
+    // Add the return point to the right-hand path
+    rightHandPath.push(playerPath[playerPath.length-1]);
 
-    // Going clockwise, start from returnIndex and end before departureIndex
-    let i = (returnIndex + 1) % perimeter.length;
-    while (i != departureIndex) {
-        completedPath.push(perimeter[i]);
+    // Traverse the perimeter starting from the return index
+    let i = returnIndex;
+    while (true) {
+        // Get the next point on the perimeter
+        let nextPoint = perimeter[(i + 1) % perimeter.length];
+        if (isPointOnLineSegment(playerPath[0], perimeter[i], nextPoint)) {
+            // If we reached the departure point, start adding the player path in reverse order
+            console.log(`Reached departure point, start adding player path in reverse order`);
+            for (let j = 0; j < playerPath.length; j++) {
+                rightHandPath.push(playerPath[j]);
+            }
+            break;
+        } else {
+            // If not, continue with the next point on the perimeter
+            console.log(`Adding point to right-hand path: ${JSON.stringify(nextPoint)}`);
+            rightHandPath.push(nextPoint);
+        }
         i = (i + 1) % perimeter.length;
     }
-    completedPath.push(perimeter[i]);
 
-    for (let i = 0; i < reducedTrailPoints.length; i++) {
-        completedPath.push(reducedTrailPoints[i]);
-    }
-
-    return completedPath;
+    return rightHandPath;
 }
 
-function getCompletedPath_CounterClockwise(reducedTrailPoints, perimeter) {
 
-    console.log('Attempting to complete the COUNTER-CLOCKWISE path!');
-    console.log('Trailpoints:');
-    console.log(reducedTrailPoints);
-    console.log('Perimeter:');
-    console.log(perimeter);
-        
-    let departureIndex = -1, returnIndex = -1;
+function getLeftHandPath(playerPath, perimeter) {
+    let leftHandPath = [];
+    let returnIndex, departureIndex;
 
+    // Find indices for departure and return points in the perimeter array
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
-        let p2 = perimeter[(i + 1) % perimeter.length];
-        if (isPointOnLineSegment(reducedTrailPoints[0], p1, p2)) {
+        let p2 = perimeter[(i - 1 + perimeter.length) % perimeter.length]; // Moved to the previous point
+        if (isPointOnLineSegment(playerPath[0], p1, p2)) {
             departureIndex = i;
+            console.log(`Departure index identified: ${departureIndex}`);
         }
-        if (isPointOnLineSegment(reducedTrailPoints[reducedTrailPoints.length - 1], p1, p2)) {
+        if (isPointOnLineSegment(playerPath[playerPath.length - 1], p1, p2)) {
             returnIndex = i;
+            console.log(`Return index identified: ${returnIndex}`);
         }
     }
 
-    if (departureIndex === -1 || returnIndex === -1) {
-        console.error("Couldn't find departure or return index in getCompletedPath()");
-        return;
+    // Add the return point to the left-hand path
+    leftHandPath.push(playerPath[playerPath.length-1]);
+
+    // Traverse the perimeter starting from the return index
+    let i = returnIndex;
+    while (true) {
+        // Get the previous point on the perimeter
+        let prevPoint = perimeter[(i - 1 + perimeter.length) % perimeter.length]; // Moved to the previous point
+        if (isPointOnLineSegment(playerPath[0], perimeter[i], prevPoint)) {
+            // If we reached the departure point, start adding the player path in the given order
+            console.log(`Reached departure point, start adding player path in order`);
+            for (let j = 0; j < playerPath.length; j++) {
+                leftHandPath.push(playerPath[j]);
+            }
+            break;
+        } else {
+            // If not, continue with the previous point on the perimeter
+            console.log(`Adding point to left-hand path: ${JSON.stringify(prevPoint)}`);
+            leftHandPath.push(prevPoint);
+        }
+        i = (i - 1 + perimeter.length) % perimeter.length; // Moved to the previous point
     }
 
-    let completedPath = [];
-
-    // Add the player's path (reversed) to the completedPath
-    let reversedTrailPoints = reducedTrailPoints.slice().reverse(); // copy and reverse the array
-    for (let i = 0; i < reversedTrailPoints.length; i++) {
-        completedPath.push(reversedTrailPoints[i]);
-    }
-
-    // TODO I'm debugging in here
-    console.log('Departure index: ' + departureIndex);
-    console.log('Perimeter at departureIndex: (' + perimeter[departureIndex].x + ', ' + perimeter[departureIndex].y + ')');
-
-    console.log('Return index: ' + returnIndex);
-    console.log('Perimeter at returnIndex: (' + perimeter[returnIndex].x + ', ' + perimeter[returnIndex].y + ')');
-
-    i = returnIndex;
-
-    // while (i != departureIndex)
-    // {
-    //     console.log('i= ' + i + '. Pushing perimeter point to CompletedPath. COUNTER-CLOCKWISE:');
-    //     console.log(perimeter[i]);
-    //     completedPath.push(perimeter[i]);
-    //     i--;
-    //     i = i % perimeter.length;
-    // }
-    completedPath.push(reducedTrailPoints[reducedTrailPoints.length-1]);
-
-    return completedPath;
+    return leftHandPath;
 }
+
+
+function getRandomVibrantColor() {
+    var letters = "0123456789ABCDEF";
+    var color = "";
+  
+    // Generate a random color by selecting six random hexadecimal values
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+  
+    // Check the luminance of the color
+    var luminance = calculateLuminance(color);
+  
+    // If the luminance is too low, generate a new color until a vibrant one is obtained
+    while (luminance < 0.3) {
+      color = "";
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      luminance = calculateLuminance(color);
+    }
+  
+    // Return the generated color
+    return "#" + color;
+  }
+  
+  // Function to calculate the luminance of a color
+  function calculateLuminance(hex) {
+    var r = parseInt(hex.substring(0, 2), 16) / 255;
+    var g = parseInt(hex.substring(2, 4), 16) / 255;
+    var b = parseInt(hex.substring(4, 6), 16) / 255;
+  
+    // Calculate the relative luminance using the sRGB color space formula
+    var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  
+    return luminance;
+  }
+  
