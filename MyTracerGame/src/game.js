@@ -209,11 +209,11 @@ function update() {
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
             createMask(rightHandPath, maskContainer, scene, foreground);
-            perimeter = leftHandPath;            
+            // perimeter = leftHandPath;            
         } else {
             console.log("Selecting LeftHandArea for masking.");
             createMask(leftHandPath, maskContainer, scene, foreground);
-            perimeter = rightHandPath;
+            // perimeter = rightHandPath;
         }
         drawPolygon("perimeter", perimeter);
         

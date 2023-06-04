@@ -1,5 +1,6 @@
 // note there's a bug in this, if the departure and return are on the same line then the smaller path is always returned
-// this is an innocuous bug for the gamelogic
+// @TODO: fix this so that if the departure and return points are on the same segment, we select the closer of the next perimeter point or the departure point
+//        but only return the departure point if it's in between the player's point and the perimeter
 function getRightHandPath(playerPath, perimeter) {
     let rightHandPath = [];
     let returnIndex, departureIndex;
@@ -44,8 +45,9 @@ function getRightHandPath(playerPath, perimeter) {
     return rightHandPath;
 }
 
-// note there's a bug in this, if the departure and return are on the same line then the smaller path is always returned
-// this is an innocuous bug for the gamelogic
+
+// @TODO: fix this so that if the departure and return points are on the same segment, we select the closer of the next perimeter point or the departure point
+//        but only return the departure point if it's in between the player's point and the perimeter
 function getLeftHandPath(playerPath, perimeter) {
     let leftHandPath = [];
     let returnIndex, departureIndex;
