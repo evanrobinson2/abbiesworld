@@ -260,15 +260,19 @@ function handlePlayerMovement() {
         player.setVelocityX(0);
     }
 
-    if (!player || !perimeter) {
+    if (player != null && perimeter != null) {
         // Check if the player is on a point not inside the perimeter and not on the perimeter
         var playerPoint = new Phaser.Geom.Point(player.x, player.y);
-        var isOutsidePerimeter = !Phaser.Geom.Polygon.ContainsPoint(perimeter, playerPoint);
-        var isNotOnPerimeter = !Phaser.Geom.Polygon.OnEdge(perimeter, playerPoint);
+        var perimeterPolygon = new Phaser.Geom.Polygon(perimeter);
+
+        
+        var isOutsidePerimeter = !Phaser.Geom.Polygon.ContainsPoint(perimeterPolygon, playerPoint);
+        var isNotOnPerimeter = ! isPointOnPolygonEdge( {x:player.x, y:player.y}, perimeter );
+        
         console.log("checking if player is in a valid location");
+        
         if (isOutsidePerimeter && isNotOnPerimeter) {
             // Player is on a point outside the perimeter, handle the logic here
-            // ...
             console.log("Player is outside the perimeter!");
 
             // Find the closest point along the perimeter to the player
@@ -409,3 +413,21 @@ function clearPolygon(internalName) {
         }
     }
 }
+
+
+function isPointOnPolygonEdge(point, polygon) {
+    for (var i = 0; i < polygon.length; i++) {
+      var currentVertex = polygon[i];
+      var nextVertex = polygon[(i + 1) % polygon.length]; // Next vertex (considering wrap-around for last vertex)
+      var edge = new Phaser.Geom.Line(currentVertex.x, currentVertex.y, nextVertex.x, nextVertex.y);
+      
+      
+
+      if (isPointOnLineSegment(point, currentVertex, nextVertex)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  

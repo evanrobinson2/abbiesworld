@@ -66,8 +66,8 @@ function reducePoints(points) {
     var pointVector = new Phaser.Math.Vector2(point.x - lineStart.x, point.y - lineStart.y);
   
     var lineLengthSquared = lineVector.lengthSq();
-    var dotProduct = Phaser.Math.Dot(lineVector, pointVector);
-  
+    var dotProduct = lineVector.x * pointVector.x + lineVector.y * pointVector.y;
+
     var t = Phaser.Math.Clamp(dotProduct / lineLengthSquared, 0, 1);
   
     var closestPointX = lineStart.x + lineVector.x * t;
@@ -75,7 +75,6 @@ function reducePoints(points) {
   
     return new Phaser.Math.Vector2(closestPointX, closestPointY);
   }
-
 
 function isPointOnLineSegment(point, lineStart, lineEnd) {
     const d1 = Phaser.Math.Distance.Between(point.x, point.y, lineStart.x, lineStart.y);
