@@ -1,6 +1,7 @@
 var gameWidth = 1232;
 var gameHeight = 928;
 var player;
+let updatedPerimeter;
 var playerSpeed = 300;
 var rightHandPath = [];
 var leftHandPath = [];
@@ -204,6 +205,7 @@ function update() {
         // console.log('Area of perimeter: ' + area);
         // console.log('Assertion check: ' + (rightHandArea + leftHandArea) + "=" + area + " = " + (rightHandArea + leftHandArea == area));
         
+
         clearPolygon("perimeter");
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
@@ -215,8 +217,10 @@ function update() {
             createMask(leftHandPath, maskContainer, scene, foreground);
             // perimeter = rightHandPath;
         }
-        drawPolygon("perimeter", perimeter);
-        
+
+
+        perimeter = updatePerimeterWithPlayerTrail(rightHandPath, leftHandPath, perimeter, reducePoints(trailPoints)); 
+        drawPolygon("perimeter", perimeter, "#00FF00");
 
         // console.log(perimeter);
         
@@ -248,6 +252,8 @@ function togglePause() {
 }
 
 function handlePlayerMovement() {
+
+    // @todo this code seems a bit bu
     // Handle player movement with extended bounds
     var halfWidth = player.displayWidth / 2;
     var halfHeight = player.displayHeight / 2;
@@ -269,7 +275,7 @@ function handlePlayerMovement() {
         var isOutsidePerimeter = !Phaser.Geom.Polygon.ContainsPoint(perimeterPolygon, playerPoint);
         var isNotOnPerimeter = ! isPointOnPolygonEdge( {x:player.x, y:player.y}, perimeter );
         
-        console.log("checking if player is in a valid location");
+        //console.log("checking if player is in a valid location");
         
         if (isOutsidePerimeter && isNotOnPerimeter) {
             // Player is on a point outside the perimeter, handle the logic here
@@ -430,4 +436,38 @@ function isPointOnPolygonEdge(point, polygon) {
     
     return false;
   }
+
+  function updatePerimeterWithPlayerTrail(rightHandPath, leftHandPath, perimeter, playerTrail) {
+    // Determine the larger polygon between rightHandPath and leftHandPath
+    const largerPolygon = rightHandPath.length >= leftHandPath.length ? rightHandPath : leftHandPath;
   
+    // Initialize the newPerimeter array
+    const newPerimeter = [];
+  
+    // Add the player's return point to newPerimeter
+    const playerReturnPoint = playerTrail[playerTrail.length - 1];
+    newPerimeter.push(playerReturnPoint);
+  
+    // Find the index of the player's return point in the largerPolygon
+    const returnIndex = largerPolygon.findIndex(point => point.x === playerReturnPoint.x && point.y === playerReturnPoint.y);
+  
+    // Traverse the perimeter starting from perimeter[returnIndex + 1]
+    for (let i = returnIndex + 1; i < perimeter.length; i++) {
+      const point = perimeter[i];
+
+      // Add the point to newPerimeter
+      newPerimeter.push(point);
+      
+      // Check if the line segment contains the player's departure point
+      if (isPointOnLineSegment(playerTrail[0], point, perimeter[(i + 1) % perimeter.length])) {
+        break;
+      }
+    }
+  
+    // Add the points from the playerTrail to newPerimeter in order
+    for (const point of playerTrail) {
+      newPerimeter.push(point);
+    }
+  
+    return newPerimeter;
+  }
