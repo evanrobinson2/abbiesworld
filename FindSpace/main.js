@@ -19,7 +19,7 @@ let uiObjects;
 let magnifier;
 let hintScaleTween; // Tween object for hint scaling
 let remaingCountText;
-
+let foundImages = [] // store the found images generated here that are overlaid ontop of the menu bar's items once found
 
 
 // Global variables
@@ -36,7 +36,8 @@ if (window.gameParams != null) {
 } else { numObjectsToFind = 5; console.log('no params'); }
 
 numObjectsToFind = 5;
-numObjectsAvailable = 10;
+numObjectsShown = 25
+numObjectsAvailable = 25;
 // Configuration object
 var config = {
   type: Phaser.AUTO,
@@ -73,6 +74,7 @@ function preload() {
     this.load.image(`ui${i}`, `assets/images/ui/ui${i}.png`);
   }
 
+  this.load.image('foundImage', `assets/images/ui/foundImage.png`);
   objectsToFind = generateRandomIndices(numObjectsAvailable, numObjectsToFind);
 }
 
