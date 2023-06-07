@@ -211,15 +211,13 @@ function update() {
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
             createMask(rightHandPath, maskContainer, scene, foreground);
-            // perimeter = leftHandPath;            
+            perimeter = leftHandPath;            
         } else {
             console.log("Selecting LeftHandArea for masking.");
             createMask(leftHandPath, maskContainer, scene, foreground);
-            // perimeter = rightHandPath;
+            perimeter = rightHandPath;
         }
 
-
-        perimeter = updatePerimeterWithPlayerTrail(rightHandPath, leftHandPath, perimeter, reducePoints(trailPoints)); 
         drawPolygon("perimeter", perimeter, "#00FF00");
 
         // console.log(perimeter);

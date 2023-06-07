@@ -237,15 +237,6 @@ function update() {
   myObjGroup.children.iterate(function (child, index) {
     child.setInteractive();
 
-    // child.on('pointerdown', function (pointer) {
-    //   if (objectsToFind.includes(index + 1) && !isMouseDown) {
-    //     objectsToFind[objectsToFind.indexOf(index + 1)] = -1;
-    //     numObjectsToFind--;
-    //     child.setVisible(false);
-    //     remaingCountText.setText(`LEFT: ` + numObjectsToFind ); 
-    //   }
-    // });
-
     child.on('pointerdown', function (pointer) {
       if (objectsToFind.includes(index + 1) && !isMouseDown) {
         objectsToFind[objectsToFind.indexOf(index + 1)] = -1;
@@ -271,10 +262,10 @@ function update() {
         scene.cameras.main.flash(500, 255, 255, 255, 0.5, () => {
         // Reset the background color after the flash effect completes
         scene.cameras.main.setBackgroundColor(originalBackgroundColor);
- });
+      });
 
-      }
-    });
+    }
+  });
 
 
 
