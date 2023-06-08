@@ -5,17 +5,21 @@ let updatedPerimeter;
 var playerSpeed = 300;
 var rightHandPath = [];
 var leftHandPath = [];
+// Create an empty trail group
+var trail;
 let smallerPath;
-var goons = [];
+var goons = []
 var goon1Velocity;
-var score;
+var score = 0;
 var scene;
 var cursors;
 var lineGraphics;
+let perimeters;
 var maskGraphics;
 var trailPoints = [];
 var priorPath = [];
 let circles = []; // Array to store the drawn circles
+let debug = true;
 var perimeter = [
 { x: 0, y: 0 },
 { x: gameWidth, y: 0 },
@@ -82,11 +86,13 @@ function create() {
     background = scene.add.image(0, 0, 'background').setOrigin(0);
     background.setDepth(-1);
 
+    if (debug) { this.physics.world.createDebugGraphic(); }
+    trail = this.physics.add.staticGroup();
+
     // Create foreground image
     foreground = this.add.image(gameWidth / 2, gameHeight / 2, 'foreground').setDepth(0);
     maskGraphics = this.add.graphics();
     
-
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
     lineGraphics.setDepth(2);
@@ -95,6 +101,14 @@ function create() {
     player.setScale(0.2);
     player.setDepth(2);
     player.setOrigin(0.5);
+
+    // Create an empty perimeters group
+    perimeters = this.physics.add.staticGroup();
+    updatePerimeter(perimeter); // Create initial perimeter
+    this.physics.add.collider(goons, perimeters, goonPerimeterCollisionHandler, null, this);
+    this.physics.add.collider(goons, trail, handleGoonTrailCollision, null, this);
+    this.physics.add.collider(trail, perimeters, handlePlayerWallCollision, null, this);
+    // TODO: TEST SELF COLLISION: this.physics.add.collider(trail, perimeters, handlePlayerWallCollision, null, this);
 
 
     // Create goons
@@ -109,8 +123,7 @@ function create() {
         goon.setDepth(2);
         goons.push(goon);  // Add the new goon to the goons array
     }
-
-
+    
     // Enable keyboard input
     cursors = scene.input.keyboard.addKeys({
         up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -121,7 +134,11 @@ function create() {
     });
 
     // Set world bounds
-    scene.physics.world.setBounds(0, 0, gameWidth, gameHeight); // Set custom world bounds
+    
+    scene.physics.world.setBounds(-10, -10, gameWidth + 20, gameHeight + 20); // Increase the world bounds by 10 pixels on each side
+    scene.cameras.main.setBounds(0, 0, gameWidth, gameHeight); // Adjust the camera to focus on the playable area
+
+    // scene.physics.world.setBounds(0, 0, gameWidth, gameHeight); // Set custom world bounds
 
     // Create UI text
     uiText = scene.add.text(10, 10, '', {
@@ -169,7 +186,7 @@ function update() {
 
             // Draw the trail line
             lineGraphics.clear();
-            lineGraphics.lineStyle(2, 0xffffff);
+            lineGraphics.lineStyle(5, 0xffffff);
             for (var i = 0; i < trailPoints.length - 1; i++) {
                 var p1 = trailPoints[i];
                 var p2 = trailPoints[i + 1];
@@ -188,50 +205,84 @@ function update() {
         trailPoints[0]  = currentPoint; 
     }
 
+    // a return to the perimeter
+    // I think this code is being called when we adjust the player's position after having crossed over a perimeter because I think trailPoints is getting erased
     if (isSafe && trailPoints.length > 1)
     {
         trailPoints.push(currentPoint);
         console.log('Returned to Perimeter!');
         rightHandPath = getRightHandPath(reducePoints(trailPoints), perimeter);
         leftHandPath = getLeftHandPath(reducePoints(trailPoints), perimeter);
-
-        // drawPolygon(rightHandPath, getRandomVibrantColor());
-        // drawPolygon(leftHandPath, getRandomVibrantColor());
     
         let leftHandArea = Math.abs(new Phaser.Geom.Polygon(leftHandPath).calculateArea());
         let rightHandArea = Math.abs(new Phaser.Geom.Polygon(rightHandPath).calculateArea());
         
-        // console.log("Right hand path area: " + rightHandArea);
-        // console.log("Left hand path area: " + leftHandArea);
-        // console.log("rightHandArea < leftHandArea: " + (rightHandArea < leftHandArea));
-        
-        // let area = Math.abs(new Phaser.Geom.Polygon(perimeter).area);
-        // console.log('Area of perimeter: ' + area);
-        // console.log('Assertion check: ' + (rightHandArea + leftHandArea) + "=" + area + " = " + (rightHandArea + leftHandArea == area));
-        
+        let scoreAdded;
 
         clearPolygon("perimeter");
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
             createMask(rightHandPath, maskContainer, scene, foreground);
-            perimeter = leftHandPath;     
+            perimeter = leftHandPath; 
+            scoreAdded = rightHandArea;    
             
         } else {
             console.log("Selecting LeftHandArea for masking.");
             createMask(leftHandPath, maskContainer, scene, foreground);
             perimeter = rightHandPath;
-
+            scoreAdded = leftHandArea;
         }
 
-        drawPolygon("perimeter", perimeter, "#00FF00");
+        score+=scoreAdded;
+        // drawPolygon("perimeter", perimeter, "#00FF00");
 
-        // console.log(perimeter);
+        // Update the perimeter within the game world to enable collision
+        updatePerimeter(perimeter);
+        // Update the player's trail with the game world to enable collistion
         
         priorPath = trailPoints;
         trailPoints = []; 
     }
 
+    // Check if any goons are inside the new perimeter and remove them
+    for (let i = goons.length - 1; i >= 0; i--) {
+        let goon = goons[i];
+        let polygon = new Phaser.Geom.Polygon(perimeter);
+        if (!Phaser.Geom.Polygon.Contains(polygon, goon.x, goon.y)) {
+            // Stop goon's movement
+            goon.body.setVelocity(0);
+
+            // Start the capture animation
+            scene.tweens.add({
+                targets: goon,
+                scaleX: 2, // Grow
+                scaleY: 2,
+                duration: 500, // Duration of growth
+                yoyo: true, // Shrink back
+                ease: 'Power1', // Easing function
+                onUpdate: function () { // Shake
+                    goon.x += Phaser.Math.Between(-1, 1); // Randomly adjust goon's x position
+                    goon.y += Phaser.Math.Between(-1, 1); // Randomly adjust goon's y position
+                },
+                onComplete: function () { // Spin away and destroy
+                    scene.tweens.add({
+                        targets: goon,
+                        rotation: Phaser.Math.DegToRad(360), // Spin
+                        scaleX: 0, // Shrink
+                        scaleY: 0,
+                        duration: 2500, // Duration of spin/shrink
+                        onComplete: function () {
+                            goon.destroy();  // Remove goon from scene
+                            goons.splice(i, 1);  // Remove goon from array
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    updateTrail(reducePoints(trailPoints));
     // Update goons' rotation based on velocity
     for (var i = 0; i < goons.length; i++) {
         goons[i].setAngularVelocity(goons[i].body.velocity.x * goonRotationSpeed);
@@ -240,7 +291,8 @@ function update() {
 
 function writeUI() {
     // Update the UI text here
-    uiText.setText('Number of Trailpoints: ' + numPoints + '\r\nPaused: ' + isPaused + '\r\nIs Safe: ' + isSafe);
+    uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score)}`);
+
     uiText.setDepth(3);
 }
 
@@ -270,12 +322,21 @@ function handlePlayerMovement() {
         player.setVelocityY(playerSpeed);
         player.setVelocityX(0);
     }
+    if (cursors.left.isDown && player.x > 0 + halfWidth) {
+        player.setVelocityX(-1 * playerSpeed);
+        player.setVelocityY(0);
+    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth) {
+        player.setVelocityX(playerSpeed);
+        player.setVelocityY(0);
+    }
 
+    // there's a bug here where the player trail gets wiped and the perimeter is lost (I think, the trailpoints array gets blasted
+    // or something. Haven't figured it out yet. We should be able to nuke this code somehow though now that the player's trail is part
+    // of physics.
     if (player != null && perimeter != null) {
         // Check if the player is on a point not inside the perimeter and not on the perimeter
         var playerPoint = new Phaser.Geom.Point(player.x, player.y);
         var perimeterPolygon = new Phaser.Geom.Polygon(perimeter);
-
         
         var isOutsidePerimeter = !Phaser.Geom.Polygon.ContainsPoint(perimeterPolygon, playerPoint);
         var isNotOnPerimeter = ! isPointOnPolygonEdge( {x:player.x, y:player.y}, perimeter );
@@ -298,6 +359,9 @@ function handlePlayerMovement() {
         }
     }
 
+
+    // if the player leaves the game area, then put them back in
+    // note: this code should be redundant
     if (player.x < 0) {
         player.x = 0;
         player.setVelocityX(0);
@@ -314,67 +378,8 @@ function handlePlayerMovement() {
         player.y = gameHeight;
         player.setVelocityY(0);
     }
-
-    if (cursors.left.isDown && player.x > 0 + halfWidth) {
-        player.setVelocityX(-1 * playerSpeed);
-        player.setVelocityY(0);
-    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth) {
-        player.setVelocityX(playerSpeed);
-        player.setVelocityY(0);
-    }
 }
 
-
-function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
-    const offset = 50; // Define the offset distance
-
-    points.forEach((point, index) => {
-        const circle = scene.add.graphics();
-
-        circle.lineStyle(5, strokeColor); // Set black outline
-        circle.fillStyle(fillColor); // Set red fill
-
-        circle.strokeCircle(point.x, point.y, diameter); // Draw circle outline at the specified point
-        circle.fillCircle(point.x, point.y, diameter); // Draw filled circle at the specified point
-
-        // Check if the point is near the corners, and adjust the position of the text accordingly
-        let textX = point.x;
-        let textY = point.y;
-
-        if (point.x < offset) {
-            textX += offset;
-        } else if (point.x > gameWidth - offset) {
-            textX -= offset;
-        }
-
-        if (point.y < offset) {
-            textY += offset;
-        } else if (point.y > gameHeight - offset) {
-            textY -= offset;
-        }
-
-        // Add the index as text
-        const text = scene.add.text(textX, textY, index.toString(), { 
-            color: '#' + textColor.toString(16).padStart(6, '0'),
-            fontSize: '20px', // Set the font size to 20 pixels
-            fontWeight: 'bold', // Set the font weight to bold
-            stroke: '#000000', // Set the text outline color to black
-            strokeThickness: 2 // Set the text outline thickness
-        });
-        text.setOrigin(0.5, 0.5); // Center the text
-
-        circles.push({ circle, text }); // Add the circle and its text to the array
-    });
-}
-
-function clearPoints() {
-    circles.forEach(({ circle, tween }) => {
-      circle.destroy(); // Destroy the graphics object
-    });
-  
-    circles = []; // Clear the array
-}
-  
 function createMask(polygonPoints, container, scene, worldObject) {
     // Add the polygon points to the container graphics object
     container.fillStyle(0xffffff);
@@ -394,10 +399,10 @@ function createMask(polygonPoints, container, scene, worldObject) {
     worldObject.setMask(geometryMask);
 }
 
-function drawPolygon(internalName, points, color = "#FF0000", fill = false, ) {
+function drawPolygon(internalName, points, color = "#FF0000", lineStyle = 5, fill = false, ) {
     polygon = scene.add.graphics();
 
-    polygon.lineStyle(5, parseInt(color.slice(1), 16)); // Set stroke color and line width
+    polygon.lineStyle(lineStyle, parseInt(color.slice(1), 16)); // Set stroke color and line width
     polygon.fillStyle(color); // Set fill color
     polygon.beginPath();
     polygon.moveTo(points[0].x, points[0].y); // Move to the first point
@@ -425,7 +430,6 @@ function clearPolygon(internalName) {
     }
 }
 
-
 function isPointOnPolygonEdge(point, polygon) {
     for (var i = 0; i < polygon.length; i++) {
       var currentVertex = polygon[i];
@@ -441,3 +445,107 @@ function isPointOnPolygonEdge(point, polygon) {
     
     return false;
   }
+
+function handleGoonTrailCollision(goon, trail) {
+    // Handle the collision event here
+    console.log('Goon collided with a Player!');
+}
+
+function goonPerimeterCollisionHandler(goon, wall) {
+    // Handle the collision event here
+    console.log('Goon collided with a wall!');
+}
+
+function handlePlayerWallCollision(player, wall) {
+    console.log('Player collided with a wall!');
+}
+
+
+function logwalls() {
+    let walls = perimeters.getChildren();
+    for (let i = 0; i < walls.length; i++) {
+        let wall = walls[i];
+
+        let x1 = wall.x - wall.displayWidth / 2;
+        let y1 = wall.y - wall.displayHeight / 2;
+        let x2 = wall.x + wall.displayWidth / 2;
+        let y2 = wall.y + wall.displayHeight / 2;
+
+        console.log(`${i}(${x1.toFixed(0)},${y1.toFixed(0)}) ${i+1}(${x2.toFixed(0)},${y2.toFixed(0)})`);
+    }
+}
+
+function drawWalls() {
+    let walls = perimeters.getChildren();
+    for (let i = 0; i < walls.length; i++) {
+        let wall = walls[i];
+
+        let x1 = wall.x - wall.displayWidth / 2;
+        let y1 = wall.y - wall.displayHeight / 2;
+        let x2 = wall.x + wall.displayWidth / 2;
+        let y2 = wall.y + wall.displayHeight / 2;
+
+        // Define the points of the wall
+        let wallPoints = [{x: x1, y: y1}, {x: x2, y: y2}];
+
+        // Draw the wall
+        drawPolygon(`wall${i}`, wallPoints, "#00FF00", 10);
+    }
+}
+
+function updatePerimeter(perimeterPoints, debug=false) {
+    // Clear out old perimeters
+    perimeters.clear(true, true);
+
+    // Generate new perimeters
+    for (let i = 0; i < perimeterPoints.length; i++) {
+        let start = perimeterPoints[i];
+        let end = i < perimeterPoints.length - 1 ? perimeterPoints[i + 1] : perimeterPoints[0];
+
+        let centerX = (start.x + end.x) / 2;
+        let centerY = (start.y + end.y) / 2;
+
+        let width = Math.abs(start.x - end.x);
+        let height = Math.abs(start.y - end.y);
+
+        // To prevent zero width/height, set a minimum value for the width and height
+        width = Math.max(1, width);
+        height = Math.max(1, height);
+        if (debug) {
+            console.log("width of wall: " + width + " height: " + height);
+        }
+        let wall = scene.physics.add.staticImage(centerX, centerY, null);
+        wall.body.setOffset(-width / 2, -height / 2);
+        wall.body.setSize(width, height);           
+        wall.displayWidth = width;
+        wall.displayHeight = height;
+        perimeters.add(wall);
+    }
+}
+
+// This is where you update the player's trail
+function updateTrail() {
+    // Clear out old trail
+    trail.clear(true, true);
+
+    // Generate new trail
+    for (let i = 0; i < trailPoints.length - 1; i++) {
+        let start = trailPoints[i];
+        let end = trailPoints[i + 1];
+
+        let centerX = (start.x + end.x) / 2;
+        let centerY = (start.y + end.y) / 2;
+
+        let width = Math.abs(start.x - end.x);
+        let height = Math.abs(start.y - end.y);
+
+        // To prevent zero width/height, set a minimum value for the width and height
+        width = Math.max(1, width);
+        height = Math.max(1, height);
+
+        let wall = scene.physics.add.staticImage(centerX, centerY, null);
+        wall.displayWidth = width;
+        wall.displayHeight = height;
+        trail.add(wall);
+    }
+}

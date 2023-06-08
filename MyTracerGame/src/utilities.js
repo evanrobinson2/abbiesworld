@@ -140,3 +140,52 @@ var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 return luminance;
 }
 
+function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
+  const offset = 50; // Define the offset distance
+
+  points.forEach((point, index) => {
+      const circle = scene.add.graphics();
+
+      circle.lineStyle(5, strokeColor); // Set black outline
+      circle.fillStyle(fillColor); // Set red fill
+
+      circle.strokeCircle(point.x, point.y, diameter); // Draw circle outline at the specified point
+      circle.fillCircle(point.x, point.y, diameter); // Draw filled circle at the specified point
+
+      // Check if the point is near the corners, and adjust the position of the text accordingly
+      let textX = point.x;
+      let textY = point.y;
+
+      if (point.x < offset) {
+          textX += offset;
+      } else if (point.x > gameWidth - offset) {
+          textX -= offset;
+      }
+
+      if (point.y < offset) {
+          textY += offset;
+      } else if (point.y > gameHeight - offset) {
+          textY -= offset;
+      }
+
+      // Add the index as text
+      const text = scene.add.text(textX, textY, index.toString(), { 
+          color: '#' + textColor.toString(16).padStart(6, '0'),
+          fontSize: '20px', // Set the font size to 20 pixels
+          fontWeight: 'bold', // Set the font weight to bold
+          stroke: '#000000', // Set the text outline color to black
+          strokeThickness: 2 // Set the text outline thickness
+      });
+      text.setOrigin(0.5, 0.5); // Center the text
+
+      circles.push({ circle, text }); // Add the circle and its text to the array
+  });
+}
+
+function clearPoints() {
+  circles.forEach(({ circle, tween }) => {
+    circle.destroy(); // Destroy the graphics object
+  });
+
+  circles = []; // Clear the array
+}
