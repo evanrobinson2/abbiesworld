@@ -16,6 +16,8 @@ var cursors;
 var lineGraphics;
 let perimeters;
 var maskGraphics;
+var score = 0;
+var additiveScore = 0;
 var trailPoints = [];
 var priorPath = [];
 let circles = []; // Array to store the drawn circles
@@ -217,8 +219,11 @@ function update() {
         let leftHandArea = Math.abs(new Phaser.Geom.Polygon(leftHandPath).calculateArea());
         let rightHandArea = Math.abs(new Phaser.Geom.Polygon(rightHandPath).calculateArea());
         
+<<<<<<< HEAD
         let scoreAdded;
 
+=======
+>>>>>>> 120ac622c7a1dbf6f105f46e3e3b678ebf87a190
         clearPolygon("perimeter");
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
@@ -291,8 +296,11 @@ function update() {
 
 function writeUI() {
     // Update the UI text here
+<<<<<<< HEAD
     uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score)}`);
 
+=======
+>>>>>>> 120ac622c7a1dbf6f105f46e3e3b678ebf87a190
     uiText.setDepth(3);
 }
 
