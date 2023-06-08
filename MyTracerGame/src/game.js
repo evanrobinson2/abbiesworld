@@ -13,6 +13,8 @@ var scene;
 var cursors;
 var lineGraphics;
 var maskGraphics;
+var score = 0;
+var additiveScore = 0;
 var trailPoints = [];
 var priorPath = [];
 let circles = []; // Array to store the drawn circles
@@ -190,35 +192,33 @@ function update() {
         console.log('Returned to Perimeter!');
         rightHandPath = getRightHandPath(reducePoints(trailPoints), perimeter);
         leftHandPath = getLeftHandPath(reducePoints(trailPoints), perimeter);
-
-        // drawPolygon(rightHandPath, getRandomVibrantColor());
-        // drawPolygon(leftHandPath, getRandomVibrantColor());
     
         let leftHandArea = Math.abs(new Phaser.Geom.Polygon(leftHandPath).calculateArea());
         let rightHandArea = Math.abs(new Phaser.Geom.Polygon(rightHandPath).calculateArea());
         
-        // console.log("Right hand path area: " + rightHandArea);
-        // console.log("Left hand path area: " + leftHandArea);
-        // console.log("rightHandArea < leftHandArea: " + (rightHandArea < leftHandArea));
-        
-        // let area = Math.abs(new Phaser.Geom.Polygon(perimeter).area);
-        // console.log('Area of perimeter: ' + area);
-        // console.log('Assertion check: ' + (rightHandArea + leftHandArea) + "=" + area + " = " + (rightHandArea + leftHandArea == area));
-        
-
         clearPolygon("perimeter");
+        
+        let scaleFactor = 1_000_000 - 1000; // 999,000
+        
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
+            // normalize, apply logarithmic scoring, and scale the result
+            additiveScore = 1000 + scaleFactor * Math.log((rightHandArea / (gameWidth * gameHeight)) + 1);
             createMask(rightHandPath, maskContainer, scene, foreground);
             perimeter = leftHandPath;            
         } else {
             console.log("Selecting LeftHandArea for masking.");
+            // normalize, apply logarithmic scoring, and scale the result
+            additiveScore = 1000 + scaleFactor * Math.log((leftHandArea / (gameWidth * gameHeight)) + 1);
             createMask(leftHandPath, maskContainer, scene, foreground);
             perimeter = rightHandPath;
         }
 
+
         drawPolygon("perimeter", perimeter, "#00FF00");
+
+        score += additiveScore;
 
         // console.log(perimeter);
         
@@ -233,7 +233,7 @@ function update() {
 
 function writeUI() {
     // Update the UI text here
-    uiText.setText('Number of Trailpoints: ' + numPoints + '\r\nPaused: ' + isPaused + '\r\nIs Safe: ' + isSafe);
+    uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${score.toFixed(0)}`);
     uiText.setDepth(3);
 }
 
