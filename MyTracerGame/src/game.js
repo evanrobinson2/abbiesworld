@@ -219,21 +219,25 @@ function update() {
         let leftHandArea = Math.abs(new Phaser.Geom.Polygon(leftHandPath).calculateArea());
         let rightHandArea = Math.abs(new Phaser.Geom.Polygon(rightHandPath).calculateArea());
         
-<<<<<<< HEAD
         let scoreAdded;
 
-=======
->>>>>>> 120ac622c7a1dbf6f105f46e3e3b678ebf87a190
         clearPolygon("perimeter");
+        
+        let scaleFactor = 1_000_000 - 1000; // 999,000
+        
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
+            // normalize, apply logarithmic scoring, and scale the result
+            additiveScore = 1000 + scaleFactor * Math.log((rightHandArea / (gameWidth * gameHeight)) + 1);
             createMask(rightHandPath, maskContainer, scene, foreground);
             perimeter = leftHandPath; 
             scoreAdded = rightHandArea;    
             
         } else {
             console.log("Selecting LeftHandArea for masking.");
+            // normalize, apply logarithmic scoring, and scale the result
+            additiveScore = 1000 + scaleFactor * Math.log((leftHandArea / (gameWidth * gameHeight)) + 1);
             createMask(leftHandPath, maskContainer, scene, foreground);
             perimeter = rightHandPath;
             scoreAdded = leftHandArea;
@@ -296,11 +300,8 @@ function update() {
 
 function writeUI() {
     // Update the UI text here
-<<<<<<< HEAD
     uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score)}`);
 
-=======
->>>>>>> 120ac622c7a1dbf6f105f46e3e3b678ebf87a190
     uiText.setDepth(3);
 }
 
