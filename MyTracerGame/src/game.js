@@ -6,9 +6,9 @@ var playerSpeed = 300;
 var rightHandPath = [];
 var leftHandPath = [];
 let smallerPath;
-var goon1;
+var goons = [];
 var goon1Velocity;
-var goon2;
+var score;
 var scene;
 var cursors;
 var lineGraphics;
@@ -65,6 +65,11 @@ function preload() {
     this.load.image('player', 'assets/images/player.png');
     this.load.image('goon1', 'assets/images/goon1.png');
     this.load.image('goon2', 'assets/images/goon2.png');
+    this.load.image('goon3', 'assets/images/goon3.png');
+    this.load.image('goon4', 'assets/images/goon4.png');
+    this.load.image('goon5', 'assets/images/goon5.png');
+    this.load.image('goon6', 'assets/images/goon6.png');
+    this.load.image('goon7', 'assets/images/goon7.png');
     this.load.image('foreground', 'assets/images/prize1_foreground.png');
 }
 
@@ -91,21 +96,20 @@ function create() {
     player.setDepth(2);
     player.setOrigin(0.5);
 
-    goon1 = scene.physics.add.sprite(gameWidth / 2, 0, 'goon1');
-    goon1.setScale(0.2);
-    goon1.setVelocity(200, 150);
-    goon1.setBounce(1);
-    goon1.setCollideWorldBounds(true);
-    goon1.setAngularVelocity(goonRotationSpeed);
-    goon1.setDepth(2);
 
-    goon2 = scene.physics.add.sprite(gameWidth / 2, 0, 'goon2');
-    goon2.setScale(0.2);
-    goon2.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
-    goon2.setBounce(1);
-    goon2.setCollideWorldBounds(true);
-    goon2.setAngularVelocity(goonRotationSpeed);
-    goon2.setDepth(2);
+    // Create goons
+    var goonImages = ['goon1', 'goon2', 'goon3','goon4', 'goon5', 'goon6','goon7'];  // Add the keys for more goon images here as needed
+    for (var i = 0; i < goonImages.length; i++) {
+        let goon = scene.physics.add.sprite(gameWidth / 2, 0, goonImages[i]);
+        goon.setScale(0.2);
+        goon.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
+        goon.setBounce(1);
+        goon.setCollideWorldBounds(true);
+        goon.setAngularVelocity(goonRotationSpeed);
+        goon.setDepth(2);
+        goons.push(goon);  // Add the new goon to the goons array
+    }
+
 
     // Enable keyboard input
     cursors = scene.input.keyboard.addKeys({
@@ -211,11 +215,13 @@ function update() {
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
             createMask(rightHandPath, maskContainer, scene, foreground);
-            perimeter = leftHandPath;            
+            perimeter = leftHandPath;     
+            
         } else {
             console.log("Selecting LeftHandArea for masking.");
             createMask(leftHandPath, maskContainer, scene, foreground);
             perimeter = rightHandPath;
+
         }
 
         drawPolygon("perimeter", perimeter, "#00FF00");
@@ -227,8 +233,9 @@ function update() {
     }
 
     // Update goons' rotation based on velocity
-    goon1.setAngularVelocity(goon1.body.velocity.x * goonRotationSpeed);
-    goon2.setAngularVelocity(goon2.body.velocity.x * goonRotationSpeed);  
+    for (var i = 0; i < goons.length; i++) {
+        goons[i].setAngularVelocity(goons[i].body.velocity.x * goonRotationSpeed);
+    }
 }
 
 function writeUI() {
@@ -433,39 +440,4 @@ function isPointOnPolygonEdge(point, polygon) {
     }
     
     return false;
-  }
-
-  function updatePerimeterWithPlayerTrail(rightHandPath, leftHandPath, perimeter, playerTrail) {
-    // Determine the larger polygon between rightHandPath and leftHandPath
-    const largerPolygon = rightHandPath.length >= leftHandPath.length ? rightHandPath : leftHandPath;
-  
-    // Initialize the newPerimeter array
-    const newPerimeter = [];
-  
-    // Add the player's return point to newPerimeter
-    const playerReturnPoint = playerTrail[playerTrail.length - 1];
-    newPerimeter.push(playerReturnPoint);
-  
-    // Find the index of the player's return point in the largerPolygon
-    const returnIndex = largerPolygon.findIndex(point => point.x === playerReturnPoint.x && point.y === playerReturnPoint.y);
-  
-    // Traverse the perimeter starting from perimeter[returnIndex + 1]
-    for (let i = returnIndex + 1; i < perimeter.length; i++) {
-      const point = perimeter[i];
-
-      // Add the point to newPerimeter
-      newPerimeter.push(point);
-      
-      // Check if the line segment contains the player's departure point
-      if (isPointOnLineSegment(playerTrail[0], point, perimeter[(i + 1) % perimeter.length])) {
-        break;
-      }
-    }
-  
-    // Add the points from the playerTrail to newPerimeter in order
-    for (const point of playerTrail) {
-      newPerimeter.push(point);
-    }
-  
-    return newPerimeter;
   }
