@@ -9,6 +9,8 @@ let leftHandPath = [];
 let trail;
 let smallerPath;
 let goons = []
+let maxGoons = 4; // the number of goons to play this game
+let goonImageTypeCount = 7; // how many goons can be drawn from the 
 let goon1Velocity;
 let score = 0;
 let scene;
@@ -69,13 +71,11 @@ function preload() {
     // Preload assets here
     this.load.image('background', 'assets/images/prize1.png');
     this.load.image('player', 'assets/images/player.png');
-    this.load.image('goon1', 'assets/images/goon1.png');
-    this.load.image('goon2', 'assets/images/goon2.png');
-    this.load.image('goon3', 'assets/images/goon3.png');
-    this.load.image('goon4', 'assets/images/goon4.png');
-    this.load.image('goon5', 'assets/images/goon5.png');
-    this.load.image('goon6', 'assets/images/goon6.png');
-    this.load.image('goon7', 'assets/images/goon7.png');
+
+    for (let i = 1; i <= goonImageTypeCount; i++) {
+        this.load.image(`goon${i}`, `assets/images/goons/goon${i}.png`);
+    }
+
     this.load.image('foreground', 'assets/images/prize1_foreground.png');
 }
 
@@ -114,6 +114,7 @@ function create() {
 
     // Create goons
     let goonImages = ['goon1', 'goon2', 'goon3','goon4', 'goon5', 'goon6','goon7'];  // Add the keys for more goon images here as needed
+
     for (let i = 0; i < goonImages.length; i++) {
         let goon = scene.physics.add.sprite(gameWidth / 2, 0, goonImages[i]);
         goon.setScale(0.15);
