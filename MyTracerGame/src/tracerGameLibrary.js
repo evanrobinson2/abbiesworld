@@ -40,10 +40,10 @@ function getRightHandPath(playerPath, perimeter) {
     while (true) {
         // Get the next point on the perimeter
         let nextPoint = perimeter[(i + 1) % perimeter.length];
-        console.log("firstIteration = " + firstIteration);
+        // console.log("firstIteration = " + firstIteration);
         if (isPointOnLineSegment(playerPath[0], perimeter[i], nextPoint) && !firstIteration) {
             // If we reached the departure point, start adding the player path in order
-            console.log("Departure Point Reached at i = " + i)
+            // console.log("Departure Point Reached at i = " + i)
             for (let j = 0; j < playerPath.length; j++) {
                 rightHandPath.push(playerPath[j]);
             }
@@ -52,7 +52,7 @@ function getRightHandPath(playerPath, perimeter) {
             // If not, continue with the next point on the perimeter
             // console.log(`Adding point to right-hand path: ${JSON.stringify(nextPoint)}`);
             rightHandPath.push(nextPoint);
-            console.log('Pushing perimeter point i = ' + i + "(" + nextPoint.x + ", " + nextPoint.y + ")");
+            // console.log('Pushing perimeter point i = ' + i + "(" + nextPoint.x + ", " + nextPoint.y + ")");
         }
         i = (i + 1) % perimeter.length;
         firstIteration = false;
@@ -121,4 +121,39 @@ function getLeftHandPath(playerPath, perimeter) {
     }
 
     return leftHandPath;
+}
+
+
+
+function logwalls() {
+    let walls = perimeters.getChildren();
+    for (let i = 0; i < walls.length; i++) {
+        let wall = walls[i];
+
+        let x1 = wall.x - wall.displayWidth / 2;
+        let y1 = wall.y - wall.displayHeight / 2;
+        let x2 = wall.x + wall.displayWidth / 2;
+        let y2 = wall.y + wall.displayHeight / 2;
+
+        console.log(`${i}(${x1.toFixed(0)},${y1.toFixed(0)}) ${i+1}(${x2.toFixed(0)},${y2.toFixed(0)})`);
+    }
+}
+
+function drawWalls() {
+    let walls = perimeters.getChildren();
+    for (let i = 0; i < walls.length; i++) {
+        let wall = walls[i];
+
+        let x1 = wall.x - wall.displayWidth / 2;
+        let y1 = wall.y - wall.displayHeight / 2;
+        let x2 = wall.x + wall.displayWidth / 2;
+        let y2 = wall.y + wall.displayHeight / 2;
+
+        // Define the points of the wall
+        let wallPoints = [{x: x1, y: y1}, {x: x2, y: y2}];
+
+        // Draw the wall
+        drawPolygon(wallPoints,"wall", 15, "#00FF00")
+        
+    }
 }
