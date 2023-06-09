@@ -21,7 +21,7 @@ let additiveScore = 0;
 let trailPoints = [];
 let priorPath = [];
 let circles = []; // Array to store the drawn circles
-let debug = true;
+let debug = false;
 let perimeter = [
 { x: 0, y: 0 },
 { x: gameWidth, y: 0 },
@@ -108,21 +108,15 @@ function create() {
     perimeters = this.physics.add.staticGroup();
     updatePerimeter(perimeter); // Create initial perimeter
     let c1 = this.physics.add.collider(goons, perimeters, goonPerimeterCollisionHandler, null, this);
-    c1.name = "Goon - Perimeter Collisions";
-
     let c2 = this.physics.add.collider(goons, trail, handleGoonTrailCollision, null, this);
-    c2.name = "Goon - Trail Collisions";
-
     let c3 = this.physics.add.collider(trail, perimeters, handlePlayerPerimeterCollision, null, this);
-    c3.name = "Player - Perimeters Collisions";
-    // TODO: TEST SELF COLLISION: this.physics.add.collider(trail, perimeters, handlePlayerWallCollision, null, this);
 
 
     // Create goons
     let goonImages = ['goon1', 'goon2', 'goon3','goon4', 'goon5', 'goon6','goon7'];  // Add the keys for more goon images here as needed
     for (let i = 0; i < goonImages.length; i++) {
         let goon = scene.physics.add.sprite(gameWidth / 2, 0, goonImages[i]);
-        goon.setScale(0.2);
+        goon.setScale(0.15);
         goon.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
         goon.setBounce(1);
         goon.setCollideWorldBounds(true);
@@ -302,30 +296,31 @@ function update() {
                         onComplete: function () {
                             goon.destroy();  // Remove goon from scene
                             //goons.splice(i, 1);  // Remove goon from array // 6.8.2023 this is a bugged line due to the way the rest of the game works. Removing the goon from the array entirely messed with the physics engine and also repeatedly deleted elements                            
-                            // Generate a random score for killing the goon
-                            const myScore = Phaser.Math.RoundTo(Phaser.Math.Between(50000, 500000),-4);
-                            // score += myScore;
-                            console.log(myScore);
-                            // Create the floating score text
-                            const text = scene.add.text(goon.x, goon.y, myScore.toString(), {
-                                fontFamily: 'Arial',
-                                fontSize: '48px',
-                                fill: '#00ff00', // Green color
-                                stroke: '#000000', // Black stroke
-                                strokeThickness: 5
-                            });
-                            text.setOrigin(0.5, 0.5);
+                            // score text hovering over goons that die
+                            // // Generate a random score for killing the goon
+                            // const myScore = Phaser.Math.RoundTo(Phaser.Math.Between(50000, 500000),-4);
+                            // // score += myScore;
+                            // console.log(myScore);
+                            // // Create the floating score text
+                            // const text = scene.add.text(goon.x, goon.y, myScore.toString(), {
+                            //     fontFamily: 'Arial',
+                            //     fontSize: '48px',
+                            //     fill: '#00ff00', // Green color
+                            //     stroke: '#000000', // Black stroke
+                            //     strokeThickness: 5
+                            // });
+                            // text.setOrigin(0.5, 0.5);
 
-                            // Animate the floating score text
-                            scene.tweens.add({
-                                targets: text,
-                                y: text.y - 100, // Adjust the desired float distance
-                                alpha: 0,
-                                duration: 2000, // Adjust the desired duration
-                                onComplete: function () {
-                                    text.destroy(); // Remove the floating text
-                                }
-                            });
+                            // // Animate the floating score text
+                            // scene.tweens.add({
+                            //     targets: text,
+                            //     y: text.y - 100, // Adjust the desired float distance
+                            //     alpha: 0,
+                            //     duration: 2000, // Adjust the desired duration
+                            //     onComplete: function () {
+                            //         text.destroy(); // Remove the floating text
+                            //     }
+                            // });
                         }
                     });
                 }
@@ -528,10 +523,8 @@ function isPointOnPolygonEdge(point, polygon) {
 
 function handleGoonTrailCollision(goon, trail) {
     // Handle the collision event here
-    // console.log('Goon collided with a Player!');
-
     if (!superman) {
-        console.log('Ouch! That hurt');
+        console.log('Ouch! That hurt. Plug for future work to cause harm to the player.');
     }
 }
 
@@ -545,7 +538,7 @@ function handlePlayerPerimeterCollision(player, perimeter) {
 }
 
 
-function updatePerimeter(perimeterPoints, debug=false) {
+function updatePerimeter(perimeterPoints) {
     // Clear out old perimeters
     perimeters.clear(true, true);
 
@@ -563,9 +556,7 @@ function updatePerimeter(perimeterPoints, debug=false) {
         // To prevent zero width/height, set a minimum value for the width and height
         width = Math.max(1, width);
         height = Math.max(1, height);
-        if (debug) {
-            console.log("width of wall: " + width + " height: " + height);
-        }
+
         let wall = scene.physics.add.staticImage(centerX, centerY, null);
         wall.body.setOffset(-width / 2, -height / 2);
         wall.body.setSize(width, height);           
