@@ -6,6 +6,10 @@ let player;
 let staticUIAreaText;
 let updatedPerimeter;
 let playerSpeed = 300;
+
+let controlButtons = []
+
+let debugGraphic;
 let rightHandPath = [];
 let leftHandPath = [];
 // Create an empty trail group
@@ -14,6 +18,7 @@ let smallerPath;
 let goons = []
 let capturedGoons = []; // Declare a separate array to track captured goons globally
 let maxGoons = 4; // the number of goons to play this game
+let numBackgrounds = 4;
 let playerImageTypeCount = 20; // how many goons can be drawn from the 
 let goonImageTypeCount = 7; // how many goons can be drawn from the 
 let goon1Velocity;
@@ -71,16 +76,21 @@ let config = {
 
 let game = new Phaser.Game(config);
 
-let numBackgrounds = 4;
+
 function preload() {
     // Preload assets here
+
+    this.load.image(`upImage`, `assets/images/ui/up.png`);
+    this.load.image(`downImage`, `assets/images/ui/down.png`);
+    this.load.image(`leftImage`, `assets/images/ui/left.png`);
+    this.load.image(`rightImage`, `assets/images/ui/right.png`);
 
     for (let i = 1; i <= numBackgrounds; i++) {
         this.load.image(`background${i}`, `assets/images/levels/${i}.back.png`);
         this.load.image(`foreground${i}`, `assets/images/levels/${i}.front.png`);
     }   
     
-    for (let i = 1; i <= goonImageTypeCount; i++) {
+    for (let i = 1; i <= playerImageTypeCount; i++) {
         this.load.image(`player${i}`, `assets/images/players/${i}.png`);
     }    
 
@@ -91,27 +101,41 @@ function preload() {
 
 }
 
+// Function to get a random array index
+function getRandomIndex(n) {
+    return Math.floor(Math.random() * n)+1;
+  }
+  
+
 function create() {
     // Create game objects and initialize the game here
     scene = this;
 
+    // Get random index for each variable
+    let randomBackgroundIndex = getRandomIndex(numBackgrounds);
+    let randomPlayerImageIndex = getRandomIndex(playerImageTypeCount);
+
+    console.log(`randomBackgroundIndex: ${randomBackgroundIndex}`);
+    console.log(`randomPlayerImageIndex: ${randomPlayerImageIndex}`);
+
     maskContainer = scene.make.graphics({ x: 0, y: 0, add: false });
     // Create background image
-    background = scene.add.image(0, 0, 'background2').setOrigin(0);
+    background = scene.add.image(0, 0, `background${randomBackgroundIndex}`).setOrigin(0);
     background.setDepth(-1);
 
-    if (debug) { this.physics.world.createDebugGraphic(); }
+    debugGraphic = this.physics.world.createDebugGraphic();
+    toggleDebugLines();
     trail = this.physics.add.staticGroup();
 
     // Create foreground image
-    foreground = this.add.image(gameWidth / 2, gameHeight / 2, 'foreground2').setDepth(0);
+    foreground = this.add.image(gameWidth / 2, gameHeight / 2, `foreground${randomBackgroundIndex}`).setDepth(0);
     maskGraphics = this.add.graphics();
     
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
     lineGraphics.setDepth(2);
     
-    player = scene.physics.add.sprite(0, 0, 'player1');
+    player = scene.physics.add.sprite(0, 0, `player${randomPlayerImageIndex}`);
     player.setScale(0.4);
     player.setDepth(2);
     player.setOrigin(0.5);
@@ -167,6 +191,62 @@ function create() {
     scene.input.keyboard.on('keydown-SPACE', togglePause);
     cursors.leftShift.on('down', startTurbo, player);
     cursors.leftShift.on('up', stopTurbo, player);
+
+    upButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'upImage');
+    downButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'downImage');
+    leftButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'leftImage');
+    rightButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'rightImage')
+
+    let myButtonScale = 0.20;
+    upButton.setScale(myButtonScale);
+    downButton.setScale(myButtonScale);
+    leftButton.setScale(myButtonScale);
+    rightButton.setScale(myButtonScale);
+
+    const buttonSize = 50; // Adjust the size as needed
+    const buttonPadding = 20; // Adjust the padding between buttons as needed
+    const centerX = 850;
+    const centerY = 850;
+    
+    // Calculate the positions of the buttons
+    const upButtonX = centerX;
+    const upButtonY = centerY - buttonSize - buttonPadding;
+    const downButtonX = centerX;
+    const downButtonY = centerY + buttonSize + buttonPadding;
+    const leftButtonX = centerX - buttonSize - buttonPadding;
+    const leftButtonY = centerY;
+    const rightButtonX = centerX + buttonSize + buttonPadding;
+    const rightButtonY = centerY;
+    
+    // Set the positions of the buttons
+    upButton.setPosition(upButtonX, upButtonY);
+    upButton.setDepth(3);
+    downButton.setPosition(downButtonX, downButtonY);
+    downButton.setDepth(3);
+    leftButton.setPosition(leftButtonX, leftButtonY);
+    leftButton.setDepth(3);
+    rightButton.setPosition(rightButtonX, rightButtonY);
+    rightButton.setDepth(3);
+
+    // Add event listeners to the buttons
+    upButton.setInteractive();
+    downButton.setInteractive();
+    leftButton.setInteractive();
+    rightButton.setInteractive();
+
+    // Assign the same click handler to all buttons
+    upButton.on('pointerdown', handleButtonClick);
+    downButton.on('pointerdown', handleButtonClick);
+    leftButton.on('pointerdown', handleButtonClick);
+    rightButton.on('pointerdown', handleButtonClick);
+
+    // Axed this because it was acting up. Assign the shakeScreen function as the click handler for the button
+    // upButton.on('pointerdown', shakeScreen);
+
+    controlButtons.push(upButton);
+    controlButtons.push(downButton);
+    controlButtons.push(upButton);
+    controlButtons.push(upButton);
 }
 
 function startTurbo(player)
@@ -237,7 +317,6 @@ function update() {
     if (isSafe && trailPoints.length > 1)
     {
         trailPoints.push(currentPoint);
-        console.log('Returned to Perimeter!');
         rightHandPath = getRightHandPath(reducePoints(trailPoints), perimeter);
         leftHandPath = getLeftHandPath(reducePoints(trailPoints), perimeter);
     
@@ -252,7 +331,7 @@ function update() {
         
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
-            console.log("Selecting RightHandArea for masking.");
+            //console.log("Selecting RightHandArea for masking.");
             writeAreaUI(rightHandArea);           
             totalCapturedPercentArea += 100 * rightHandArea / (gameHeight * gameWidth);            
             // normalize, apply logarithmic scoring, and scale the result
@@ -261,7 +340,7 @@ function update() {
             perimeter = leftHandPath; 
             scoreAdded = rightHandArea;                
         } else {
-            console.log("Selecting LeftHandArea for masking.");
+            //console.log("Selecting LeftHandArea for masking.");
             // normalize, apply logarithmic scoring, and scale the result
             writeAreaUI(leftHandArea);
             totalCapturedPercentArea += 100 * leftHandArea / (gameHeight * gameWidth);
@@ -408,6 +487,47 @@ function writeAreaUI  (area ) {
     });   
 }
 
+// Function to handle button clicks
+function handleButtonClick() {
+    // Get the clicked button
+    const clickedButton = this;
+    
+    let halfWidth = player.displayWidth / 2;
+    let halfHeight = player.displayHeight / 2;
+    
+    // Handle the specific button's functionality
+    if (clickedButton === upButton) {
+      // Handle up button click
+      console.log("Up button clicked!");
+      if( player.y > 0 + halfHeight && player.body.velocity.y <= 0) {
+        player.setVelocityY(-1 * playerSpeed);
+        player.setVelocityX(0);
+      }
+    } else if (clickedButton === downButton) {
+      // Handle down button click
+      console.log("Down button clicked!");
+      if (player.y < gameHeight - halfHeight && player.body.velocity.y >= 0) {
+        player.setVelocityY(playerSpeed);
+        player.setVelocityX(0);
+      }
+    } else if (clickedButton === leftButton) {
+      // Handle left button click
+      console.log("Left button clicked!");
+      if (player.x > 0 + halfWidth && player.body.velocity.x <= 0) {
+        player.setVelocityX(-1 * playerSpeed);
+        player.setVelocityY(0);
+      }
+    } else if (clickedButton === rightButton) {
+      // Handle right button click
+      console.log("Right button clicked!");
+      if (player.x < gameWidth - halfWidth && player.body.velocity.x >= 0) {
+        player.setVelocityX(playerSpeed);
+        player.setVelocityY(0);
+      }
+    }
+  }
+
+
 function togglePause() {
     isPaused = !isPaused;
 
@@ -427,7 +547,6 @@ function handlePlayerMovement() {
     if (cursors.up.isDown && player.y > 0 + halfHeight && player.body.velocity.y <= 0) {
         player.setVelocityY(-1 * playerSpeed);
         player.setVelocityX(0);
-        console.log(player.body.velocity.y);
     } else if (cursors.down.isDown && player.y < gameHeight - halfHeight && player.body.velocity.y >= 0) {
         player.setVelocityY(playerSpeed);
         player.setVelocityX(0);
@@ -560,3 +679,32 @@ function updateTrail() {
         trail.add(wall);
     }
 }
+
+// Toggle the visibility of the debug graphic
+function toggleDebugLines() {
+    debugGraphic.visible = !debugGraphic.visible;
+  }
+
+
+  // Function to shake the screen
+  // this code was written by AI. I haven't tested it. I don't think it works as expected.
+function shakeScreen() {
+    const duration = 100; // Duration of the shake in milliseconds
+    const intensity = 5; // Intensity of the shake (pixels)
+  
+    const camera = scene.cameras.main;
+  
+    // Store the initial position of the camera
+    const initialX = camera.x;
+    const initialY = camera.y;
+  
+    // Randomly shake the camera within the specified duration and intensity
+    scene.time.delayedCall(duration, () => {
+      camera.shake(duration, intensity);
+    });
+  
+    // Reset the camera position after the shake ends
+    scene.time.delayedCall(duration, () => {
+      camera.setPosition(initialX, initialY);
+    });
+  }
