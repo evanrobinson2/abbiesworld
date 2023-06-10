@@ -1,0 +1,242 @@
+function reducePoints(points) {
+    if (points.length < 2) {
+      return points; // If there are less than 2 points, there's nothing to reduce.
+    }
+  
+    // Array to store the reduced points
+    let reducedPoints = [points[0]];
+  
+    // Determine initial direction
+    let direction;
+    if (points[0].x === points[1].x) {
+      direction = 'y';
+    } else if (points[0].y === points[1].y) {
+      direction = 'x';
+    }
+  
+    for (let i = 1; i < points.length - 1; i++) {
+      let currentPoint = points[i];
+      let nextPoint = points[i + 1];
+  
+      // Determine the current direction
+      let newDirection;
+      if (currentPoint.x === nextPoint.x) {
+        newDirection = 'y';
+      } else if (currentPoint.y === nextPoint.y) {
+        newDirection = 'x';
+      }
+  
+      // If there's a change in direction, add the current point to the reducedPoints
+      if (newDirection !== direction) {
+        reducedPoints.push(currentPoint);
+        direction = newDirection;
+      }
+    }
+  
+    // Add the last point if it's not already added
+    if (!reducedPoints.includes(points[points.length - 1])) {
+      reducedPoints.push(points[points.length - 1]);
+    }
+  
+    return reducedPoints;
+  }
+
+  function getClosestPointOnPerimeter(point, perimeter) {
+    var closestDistance = Infinity;
+    var closestPoint = null;
+  
+    for (var i = 0; i < perimeter.length; i++) {
+      var currentPoint = perimeter[i];
+      var nextPoint = perimeter[(i + 1) % perimeter.length];
+  
+      var closestPointOnSegment = getClosestPointOnLineSegment(point, currentPoint, nextPoint);
+      var distance = Phaser.Math.Distance.Between(point.x, point.y, closestPointOnSegment.x, closestPointOnSegment.y);
+  
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestPoint = closestPointOnSegment;
+      }
+    }
+  
+    return closestPoint;
+  }
+  
+  function getClosestPointOnLineSegment(point, lineStart, lineEnd) {
+    var lineVector = new Phaser.Math.Vector2(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y);
+    var pointVector = new Phaser.Math.Vector2(point.x - lineStart.x, point.y - lineStart.y);
+  
+    var lineLengthSquared = lineVector.lengthSq();
+    var dotProduct = lineVector.x * pointVector.x + lineVector.y * pointVector.y;
+    
+    var t = Phaser.Math.Clamp(dotProduct / lineLengthSquared, 0, 1);
+  
+    var closestPointX = lineStart.x + lineVector.x * t;
+    var closestPointY = lineStart.y + lineVector.y * t;
+  
+    return new Phaser.Math.Vector2(closestPointX, closestPointY);
+  }
+
+
+function isPointOnLineSegment(point, lineStart, lineEnd) {
+    const d1 = Phaser.Math.Distance.Between(point.x, point.y, lineStart.x, lineStart.y);
+    const d2 = Phaser.Math.Distance.Between(point.x, point.y, lineEnd.x, lineEnd.y);
+    const lineLength = Phaser.Math.Distance.Between(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
+    
+    // Use a tolerance because of possible floating-point errors
+    const tolerance = 0.01;
+    
+    return Math.abs(d1 + d2 - lineLength) < tolerance;
+}
+
+function isPointOnPerimeter(point, perimeter) {
+    for (let i = 0; i < perimeter.length - 1; i++) {
+        if (isPointOnLineSegment(point, perimeter[i], perimeter[i + 1])) {
+            return true;
+        }
+    }
+    
+    // check for the case where the point is on the line segment formed by the last point and the first point
+    if (isPointOnLineSegment(point, perimeter[perimeter.length - 1], perimeter[0])) {
+        return true;
+    }
+    
+    return false;
+}
+
+function getRandomVibrantColor() {
+    var letters = "0123456789ABCDEF";
+    var color = "";
+  
+    // Generate a random color by selecting six random hexadecimal values
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+  
+    // Check the luminance of the color
+    var luminance = calculateLuminance(color);
+  
+    // If the luminance is too low, generate a new color until a vibrant one is obtained
+    while (luminance < 0.3) {
+      color = "";
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      luminance = calculateLuminance(color);
+    }
+  
+    // Return the generated color
+    return "#" + color;
+}
+  
+// Function to calculate the luminance of a color
+function calculateLuminance(hex) {
+var r = parseInt(hex.substring(0, 2), 16) / 255;
+var g = parseInt(hex.substring(2, 4), 16) / 255;
+var b = parseInt(hex.substring(4, 6), 16) / 255;
+
+// Calculate the relative luminance using the sRGB color space formula
+var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+return luminance;
+}
+
+function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
+  const offset = 50; // Define the offset distance
+
+  points.forEach((point, index) => {
+      const circle = scene.add.graphics();
+
+      circle.lineStyle(5, strokeColor); // Set black outline
+      circle.fillStyle(fillColor); // Set red fill
+
+      circle.strokeCircle(point.x, point.y, diameter); // Draw circle outline at the specified point
+      circle.fillCircle(point.x, point.y, diameter); // Draw filled circle at the specified point
+
+      // Check if the point is near the corners, and adjust the position of the text accordingly
+      let textX = point.x;
+      let textY = point.y;
+
+      if (point.x < offset) {
+          textX += offset;
+      } else if (point.x > gameWidth - offset) {
+          textX -= offset;
+      }
+
+      if (point.y < offset) {
+          textY += offset;
+      } else if (point.y > gameHeight - offset) {
+          textY -= offset;
+      }
+
+      // Add the index as text
+      const text = scene.add.text(textX, textY, index.toString(), { 
+          color: '#' + textColor.toString(16).padStart(6, '0'),
+          fontSize: '20px', // Set the font size to 20 pixels
+          fontWeight: 'bold', // Set the font weight to bold
+          stroke: '#000000', // Set the text outline color to black
+          strokeThickness: 2 // Set the text outline thickness
+      });
+      text.setOrigin(0.5, 0.5); // Center the text
+
+      circles.push({ circle, text }); // Add the circle and its text to the array
+  });
+}
+
+function clearPoints() {
+  circles.forEach(({ circle, tween }) => {
+    circle.destroy(); // Destroy the graphics object
+  });
+
+  circles = []; // Clear the array
+}
+
+function drawPolygon(points, internalName = "unset", lineStyle = 5, color = "#FF0000", fill = false, ) {
+  polygon = scene.add.graphics();
+
+
+  if (internalName === "unset") {
+      // set internalName to "polygon-{polygonContainer.size}"
+      internalName = `polygon-${polygonContainer.length}`;
+      console.log("Added " + internalName + " to polygon array");
+  }
+
+  polygon.lineStyle(lineStyle, parseInt(color.slice(1), 16)); // Set stroke color and line width
+  polygon.fillStyle(color); // Set fill color
+  polygon.beginPath();
+  polygon.moveTo(points[0].x, points[0].y); // Move to the first point
+
+  for (let i = 1; i < points.length; i++) {
+      polygon.lineTo(points[i].x, points[i].y); // Draw lines to subsequent points
+  }
+
+  polygon.closePath(); // Close the shape
+
+  polygon.strokePath(); // Draw the outline
+  if (fill) { polygon.fillPath() }; // Fill the shape
+
+  polygonContainer.push({name: internalName, polygon: polygon});
+}
+
+function clearPolygon(internalName) {
+  for (let i = 0; i < polygonContainer.length; i++) {
+      if (polygonContainer[i].name === internalName) {
+          polygonContainer[i].polygon.clear(); // Clear the polygon
+          polygonContainer[i].polygon.destroy();
+          polygonContainer.splice(i, 1); // Remove the polygon from the container
+          break;
+      }
+  }
+}
+
+function isPointOnPolygonEdge(point, polygon) {
+  for (let i = 0; i < polygon.length; i++) {
+    let currentVertex = polygon[i];
+    let nextVertex = polygon[(i + 1) % polygon.length]; // Next vertex (considering wrap-around for last vertex)
+    let edge = new Phaser.Geom.Line(currentVertex.x, currentVertex.y, nextVertex.x, nextVertex.y);
+    if (isPointOnLineSegment(point, currentVertex, nextVertex)) {
+      return true;
+    }
+  }
+  
+  return false;
+}

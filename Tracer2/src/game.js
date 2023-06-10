@@ -1,6 +1,9 @@
-let gameWidth = 1232;
-let gameHeight = 928;
+let debug = true;
+let gameWidth = 1024;
+let gameHeight = 1024;
+let totalCapturedPercentArea = 0;
 let player;
+let staticUIAreaText;
 let updatedPerimeter;
 let playerSpeed = 300;
 let rightHandPath = [];
@@ -9,6 +12,7 @@ let leftHandPath = [];
 let trail;
 let smallerPath;
 let goons = []
+let capturedGoons = []; // Declare a separate array to track captured goons globally
 let maxGoons = 4; // the number of goons to play this game
 let playerImageTypeCount = 20; // how many goons can be drawn from the 
 let goonImageTypeCount = 7; // how many goons can be drawn from the 
@@ -24,7 +28,6 @@ let additiveScore = 0;
 let trailPoints = [];
 let priorPath = [];
 let circles = []; // Array to store the drawn circles
-let debug = false;
 let perimeter = [
 { x: 0, y: 0 },
 { x: gameWidth, y: 0 },
@@ -68,10 +71,15 @@ let config = {
 
 let game = new Phaser.Game(config);
 
+let numBackgrounds = 4;
 function preload() {
     // Preload assets here
-    this.load.image('background', 'assets/images/prize1.png');
 
+    for (let i = 1; i <= numBackgrounds; i++) {
+        this.load.image(`background${i}`, `assets/images/levels/${i}.back.png`);
+        this.load.image(`foreground${i}`, `assets/images/levels/${i}.front.png`);
+    }   
+    
     for (let i = 1; i <= goonImageTypeCount; i++) {
         this.load.image(`player${i}`, `assets/images/players/${i}.png`);
     }    
@@ -80,7 +88,7 @@ function preload() {
         this.load.image(`goon${i}`, `assets/images/goons/goon${i}.png`);
     }
 
-    this.load.image('foreground', 'assets/images/prize1_foreground.png');
+
 }
 
 function create() {
@@ -89,24 +97,25 @@ function create() {
 
     maskContainer = scene.make.graphics({ x: 0, y: 0, add: false });
     // Create background image
-    background = scene.add.image(0, 0, 'background').setOrigin(0);
+    background = scene.add.image(0, 0, 'background2').setOrigin(0);
     background.setDepth(-1);
 
     if (debug) { this.physics.world.createDebugGraphic(); }
     trail = this.physics.add.staticGroup();
 
     // Create foreground image
-    foreground = this.add.image(gameWidth / 2, gameHeight / 2, 'foreground').setDepth(0);
+    foreground = this.add.image(gameWidth / 2, gameHeight / 2, 'foreground2').setDepth(0);
     maskGraphics = this.add.graphics();
     
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
     lineGraphics.setDepth(2);
-
+    
     player = scene.physics.add.sprite(0, 0, 'player1');
     player.setScale(0.4);
     player.setDepth(2);
     player.setOrigin(0.5);
+    // player.setCollideWorldBounds(true);
 
     // Create an empty perimeters group
     perimeters = this.physics.add.staticGroup();
@@ -121,7 +130,7 @@ function create() {
 
     for (let i = 0; i < goonImages.length; i++) {
         let goon = scene.physics.add.sprite(gameWidth / 2, 0, goonImages[i]);
-        goon.setScale(0.15);
+        goon.setScale(0.20);
         goon.setVelocity(Phaser.Math.Between(-goonSpeed, goonSpeed), Phaser.Math.Between(-goonSpeed, goonSpeed));
         goon.setBounce(1);
         goon.setCollideWorldBounds(true);
@@ -204,7 +213,7 @@ function update() {
 
             // Draw the trail line
             lineGraphics.clear();
-            lineGraphics.lineStyle(5, 0xffffff);
+            lineGraphics.lineStyle(3, 0xffffff);
             for (let i = 0; i < trailPoints.length - 1; i++) {
                 let p1 = trailPoints[i];
                 let p2 = trailPoints[i + 1];
@@ -244,15 +253,18 @@ function update() {
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
             console.log("Selecting RightHandArea for masking.");
+            writeAreaUI(rightHandArea);           
+            totalCapturedPercentArea += 100 * rightHandArea / (gameHeight * gameWidth);            
             // normalize, apply logarithmic scoring, and scale the result
             additiveScore = 1000 + scaleFactor * Math.log((rightHandArea / (gameWidth * gameHeight)) + 1);
             createMask(rightHandPath, maskContainer, scene, foreground);
             perimeter = leftHandPath; 
-            scoreAdded = rightHandArea;    
-            
+            scoreAdded = rightHandArea;                
         } else {
             console.log("Selecting LeftHandArea for masking.");
             // normalize, apply logarithmic scoring, and scale the result
+            writeAreaUI(leftHandArea);
+            totalCapturedPercentArea += 100 * leftHandArea / (gameHeight * gameWidth);
             additiveScore = 1000 + scaleFactor * Math.log((leftHandArea / (gameWidth * gameHeight)) + 1);
             createMask(leftHandPath, maskContainer, scene, foreground);
             perimeter = rightHandPath;
@@ -260,80 +272,79 @@ function update() {
         }
 
         score+=scoreAdded;
-        // drawPolygon("perimeter", perimeter, "#00FF00");
-
         // Update the perimeter within the game world to enable collision
         updatePerimeter(perimeter);
-        // Update the player's trail with the game world to enable collistion
-        
+        // Update the player's trail with the game world to enable collistion        
         priorPath = trailPoints;
         trailPoints = []; 
     }
 
+    // Inside the update function
     for (let i = goons.length - 1; i >= 0; i--) {
         let goon = goons[i];
-        if (goon && goon.body) {
+        if (goon && goon.body && !capturedGoons.includes(goon)) {
             let polygon = new Phaser.Geom.Polygon(perimeter);
             // if the goon is NOT inside the polygon then kill it
             if (!Phaser.Geom.Polygon.Contains(polygon, goon.x, goon.y)) {
                 // Stop goon's movement
                 goon.body.setVelocity(0);
-    
-            // Start the capture animation
-            console.log("Capturing a goon!");
-            scene.tweens.add({
-                targets: goon,
-                scaleX: 2, // Grow
-                scaleY: 2,
-                duration: 500, // Duration of growth
-                yoyo: true, // Shrink back
-                ease: 'Power1', // Easing function
-                onUpdate: function () { // Shake
-                    goon.x += Phaser.Math.Between(-1, 1); // Randomly adjust goon's x position
-                    goon.y += Phaser.Math.Between(-1, 1); // Randomly adjust goon's y position
-                },
-                onComplete: function () { // Spin away and destroy
-                    scene.tweens.add({
-                        targets: goon,
-                        rotation: Phaser.Math.DegToRad(360), // Spin
-                        scaleX: 0, // Shrink
-                        scaleY: 0,
-                        duration: 1500, // Duration of spin/shrink
-                        onComplete: function () {
-                            goon.destroy();  // Remove goon from scene
-                            //goons.splice(i, 1);  // Remove goon from array // 6.8.2023 this is a bugged line due to the way the rest of the game works. Removing the goon from the array entirely messed with the physics engine and also repeatedly deleted elements                            
-                            // score text hovering over goons that die
-                            // // Generate a random score for killing the goon
-                            // const myScore = Phaser.Math.RoundTo(Phaser.Math.Between(50000, 500000),-4);
-                            // // score += myScore;
-                            // console.log(myScore);
-                            // // Create the floating score text
-                            // const text = scene.add.text(goon.x, goon.y, myScore.toString(), {
-                            //     fontFamily: 'Arial',
-                            //     fontSize: '48px',
-                            //     fill: '#00ff00', // Green color
-                            //     stroke: '#000000', // Black stroke
-                            //     strokeThickness: 5
-                            // });
-                            // text.setOrigin(0.5, 0.5);
+        
+                console.log("Capturing a goon!");
+                // Generate a random score for killing the goon
+                const myScore = Phaser.Math.RoundTo(Phaser.Math.Between(50000, 250000),-4);
+                score += myScore;
+                
+                // Create the floating score text
+                const text = scene.add.text(goon.x, goon.y, myScore.toString(), {
+                    fontFamily: 'Arial',
+                    fontSize: '48px',
+                    fill: '#00ff00', // Green color
+                    stroke: '#000000', // Black stroke
+                    strokeThickness: 5
+                });
+                text.setOrigin(0.5, 0.5);
 
-                            // // Animate the floating score text
-                            // scene.tweens.add({
-                            //     targets: text,
-                            //     y: text.y - 100, // Adjust the desired float distance
-                            //     alpha: 0,
-                            //     duration: 2000, // Adjust the desired duration
-                            //     onComplete: function () {
-                            //         text.destroy(); // Remove the floating text
-                            //     }
-                            // });
-                        }
-                    });
+                // Animate the floating score text
+                scene.tweens.add({
+                    targets: text,
+                    y: text.y - 100, // Adjust the desired float distance
+                    alpha: 0,
+                    duration: 4000, // Adjust the desired duration
+                    onComplete: function () {
+                        text.destroy(); // Remove the floating text
+                    }
+                });
+
+                capturedGoons.push(goon);
+                // Start the capture animation
+                scene.tweens.add({
+                    targets: goon,
+                    scaleX: 2, // Grow
+                    scaleY: 2,
+                    duration: 500, // Duration of growth
+                    yoyo: true, // Shrink back
+                    ease: 'Power1', // Easing function
+                    onUpdate: function () { // Shake
+                        goon.x += Phaser.Math.Between(-1, 1); // Randomly adjust goon's x position
+                        goon.y += Phaser.Math.Between(-1, 1); // Randomly adjust goon's y position
+                    },
+                    onComplete: function () { // Spin away and destroy
+                        scene.tweens.add({
+                            targets: goon,
+                            rotation: Phaser.Math.DegToRad(360), // Spin
+                            scaleX: 0, // Shrink
+                            scaleY: 0,
+                            duration: 1500, // Duration of spin/shrink
+                            onComplete: function () {
+                                goon.destroy();  // Remove goon from scene
+                                // goons.splice(i, 1);  // Remove goon from array // 6.8.2023 this is a bugged line due to the way the rest of the game works. Removing the goon from the array entirely messed with the physics engine and also repeatedly deleted element's score text hovering over goons that die
+                            }
+                        });
+                    }
+                });
                 }
-            });
             }
         }
-    }
 
     updateTrail(reducePoints(trailPoints));
     // Update goons' rotation based on velocity
@@ -361,10 +372,40 @@ function update() {
 
 function writeUI() {
     // Update the UI text here
-    uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}`);
+    if (debug) {
+        uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%`);
+        uiText.setDepth(3);
+    }
+
+    
+}
 
 
-    uiText.setDepth(3);
+function writeAreaUI  (area ) {
+    let percentCaptured = 100 * area / (gameWidth*gameHeight);
+    capturedString = "Captured " + percentCaptured.toFixed(2) + "%";
+    console.log(`Area carved! ${percentCaptured}%`);
+
+    // Create the floating score text
+    const text = scene.add.text(gameWidth/2, gameHeight/2, capturedString, {
+        fontFamily: 'Arial',
+        fontSize: '48px',
+        fill: '#00ff00', // Green color
+        stroke: '#000000', // Black stroke
+        strokeThickness: 5
+    });
+    text.setOrigin(0.5, 0.5);
+
+    // Animate the floating score text
+    scene.tweens.add({
+        targets: text,
+        y: text.y - 100, // Adjust the desired float distance
+        alpha: 0,
+        duration: 4000, // Adjust the desired duration
+        onComplete: function () {
+            text.destroy(); // Remove the floating text
+        }
+    });   
 }
 
 function togglePause() {
@@ -380,27 +421,25 @@ function togglePause() {
 }
 
 function handlePlayerMovement() {
-
-    // @todo this code seems a bit bu
-    // Handle player movement with extended bounds
     let halfWidth = player.displayWidth / 2;
     let halfHeight = player.displayHeight / 2;
-
-    if (cursors.up.isDown && player.y > 0 + halfHeight) {
+    
+    if (cursors.up.isDown && player.y > 0 + halfHeight && player.body.velocity.y <= 0) {
         player.setVelocityY(-1 * playerSpeed);
         player.setVelocityX(0);
-    } else if (cursors.down.isDown && player.y < gameHeight - halfHeight) {
+        console.log(player.body.velocity.y);
+    } else if (cursors.down.isDown && player.y < gameHeight - halfHeight && player.body.velocity.y >= 0) {
         player.setVelocityY(playerSpeed);
         player.setVelocityX(0);
     }
-    if (cursors.left.isDown && player.x > 0 + halfWidth) {
+    if (cursors.left.isDown && player.x > 0 + halfWidth && player.body.velocity.x <= 0) {
         player.setVelocityX(-1 * playerSpeed);
         player.setVelocityY(0);
-    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth) {
+    } else if (cursors.right.isDown && player.x < gameWidth - halfWidth && player.body.velocity.x >= 0) {
         player.setVelocityX(playerSpeed);
         player.setVelocityY(0);
     }
-
+    
     // this code may not be needed anymore.
     if (player != null && perimeter != null) {
         // Check if the player is on a point not inside the perimeter and not on the perimeter
@@ -427,26 +466,6 @@ function handlePlayerMovement() {
             player.setVelocityY(0);
         }
     }
-
-
-    // // if the player leaves the game area, then put them back in
-    // // note: this code should be redundant
-    // if (player.x < 0) {
-    //     player.x = 0;
-    //     player.setVelocityX(0);
-    // }
-    // if (player.x > gameWidth + halfWidth) {
-    //     player.x = gameWidth;
-    //     player.setVelocityX(0);
-    // }
-    // if (player.y < 0) {
-    //     player.y = 0;
-    //     player.setVelocityY(0);
-    // }
-    // if (player.y > gameHeight) {
-    //     player.y = gameHeight;
-    //     player.setVelocityY(0);
-    // }
 }
 
 function createMask(polygonPoints, container, scene, worldObject) {
@@ -468,59 +487,7 @@ function createMask(polygonPoints, container, scene, worldObject) {
     worldObject.setMask(geometryMask);
 }
 
-function drawPolygon(points, internalName = "unset", lineStyle = 5, color = "#FF0000", fill = false, ) {
-    polygon = scene.add.graphics();
 
-
-    if (internalName === "unset") {
-        // set internalName to "polygon-{polygonContainer.size}"
-        internalName = `polygon-${polygonContainer.length}`;
-        console.log("Added " + internalName + " to polygon array");
-    }
-
-    polygon.lineStyle(lineStyle, parseInt(color.slice(1), 16)); // Set stroke color and line width
-    polygon.fillStyle(color); // Set fill color
-    polygon.beginPath();
-    polygon.moveTo(points[0].x, points[0].y); // Move to the first point
-
-    for (let i = 1; i < points.length; i++) {
-        polygon.lineTo(points[i].x, points[i].y); // Draw lines to subsequent points
-    }
-
-    polygon.closePath(); // Close the shape
-
-    polygon.strokePath(); // Draw the outline
-    if (fill) { polygon.fillPath() }; // Fill the shape
-
-    polygonContainer.push({name: internalName, polygon: polygon});
-}
-
-function clearPolygon(internalName) {
-    for (let i = 0; i < polygonContainer.length; i++) {
-        if (polygonContainer[i].name === internalName) {
-            polygonContainer[i].polygon.clear(); // Clear the polygon
-            polygonContainer[i].polygon.destroy();
-            polygonContainer.splice(i, 1); // Remove the polygon from the container
-            break;
-        }
-    }
-}
-
-function isPointOnPolygonEdge(point, polygon) {
-    for (let i = 0; i < polygon.length; i++) {
-      let currentVertex = polygon[i];
-      let nextVertex = polygon[(i + 1) % polygon.length]; // Next vertex (considering wrap-around for last vertex)
-      let edge = new Phaser.Geom.Line(currentVertex.x, currentVertex.y, nextVertex.x, nextVertex.y);
-      
-      
-
-      if (isPointOnLineSegment(point, currentVertex, nextVertex)) {
-        return true;
-      }
-    }
-    
-    return false;
-  }
 
 function handleGoonTrailCollision(goon, trail) {
     // Handle the collision event here
