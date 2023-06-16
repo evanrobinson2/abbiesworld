@@ -136,7 +136,7 @@ function create() {
     lineGraphics.setDepth(2);
     
     player = scene.physics.add.sprite(0, 0, `player${randomPlayerImageIndex}`);
-    player.setScale(0.4);
+    player.setScale(0.35);
     player.setDepth(2);
     player.setOrigin(0.5);
     // player.setCollideWorldBounds(true);

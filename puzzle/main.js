@@ -234,7 +234,7 @@ const onPiecePointerUp = (piece) => {
   piece.off('pointerup');
 
   // Reset the depth of the puzzle piece to its default value
-  piece.depth = 0;
+  // piece.depth = 0;
 
   previousPointer = null;
 
