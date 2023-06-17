@@ -57,6 +57,11 @@ let goonRotationSpeed = 0.3; // Rotation speed multiplier
 let goonSpeedIncrease = 0.001; // Speed increase on bounce
 let isSafe = true;
 
+let upButton;
+let downButton;
+let leftButton;
+let rightButton;
+
 let config = {
     type: Phaser.AUTO,
     width: gameWidth,
@@ -197,10 +202,10 @@ function create() {
     cursors.leftShift.on('down', startTurbo, player);
     cursors.leftShift.on('up', stopTurbo, player);
 
-    let upButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'upImage');
-    let downButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'downImage');
-    let leftButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'leftImage');
-    let rightButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'rightImage')
+    upButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'upImage');
+    downButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'downImage');
+    leftButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'leftImage');
+    rightButton = scene.physics.add.sprite(gameWidth/2, gameHeight/2, 'rightImage')
 
     let myButtonScale = 0.20;
     upButton.setScale(myButtonScale);

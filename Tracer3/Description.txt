@@ -1,0 +1,14 @@
+MyTracerGame is an area capture game.
+
+The goal of the game is for the player to capture screen territory by completing paths that form circuits with the existing perimeter. Paths formed will cause the perimeter to grow and reshape to enclose the captured territory. The game will end once the player's captured territory meets victory conditions, which can vary based on the level's objectives.
+
+The player controls a point on a line. The point will always be either on the perimeter, in which case the player is "Safe", or will be on the player's path/trail. There can only ever be one trail at a time. The player's trail always starts and ends on the perimeter. Note: The player need not start or end the path to/from a vertex of the perimeter. The player is not allowed to collide or self-intersect with their own path.
+
+Once the player's path is completes a circuit, the following conditions will be met:
+1. The player's path has a start and end point, each coincident with the perimeter.
+2. Two circuits are formed: The leftHandPath and the rightHandPath
+    2a. The leftHandPath starts at the return point of the player, and traces a path from the player's perspective to the left. If the first point that the path encounters is the return point, then the circuit follows the player's path, completing the circuit once the return point is reached. Otherwise, the path follows the perimeter until the starting point is reached, at which time the starting point and player's path are used to complete the circuit.
+3. The area enclosed by each path is calculated, and the perimeter of the smaller of the two areas will cut away from the game play area. The perimeter will then be re-assessed to include the border of the newly captured area as well.
+
+In this fashion, the player will trace paths that complete circuits to carve away and capture areas of the screen, successively until game ending criteria are met (e.g. a specific point is captured, or a certain amount of territory is captured, etc.).
+
