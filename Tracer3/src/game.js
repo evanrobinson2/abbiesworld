@@ -5,6 +5,7 @@ import { isPointOnPerimeter,
          isPointOnPolygonEdge, 
          getClosestPointOnPerimeter} from './utilities.js';
 import {getRightHandPath, getLeftHandPath} from './tracerGameLibrary.js';
+
 let trailColor = 0xFFFFFF;
 let originalColor = 0xFFFFFF;
 let debug = true;
@@ -35,6 +36,7 @@ let maxStars = 11;
 let playerSpeed = 300;
 let goonSpeed = 200; // Initial speed of the goons
 let playerLives = 4;
+let goonRotationSpeed = 0.3; // Rotation speed multiplier
 
 let perimeter = [
 { x: 0, y: 0 },
@@ -51,7 +53,6 @@ let isPaused = false;
 let foreground;
 let background;
 
-let goonRotationSpeed = 0.3; // Rotation speed multiplier
 let isSafe = true;
 let upButton;
 let downButton;
