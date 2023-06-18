@@ -1,83 +1,85 @@
-function reducePoints(points) {
-    if (points.length < 2) {
-      return points; // If there are less than 2 points, there's nothing to reduce.
-    }
-  
-    // Array to store the reduced points
-    let reducedPoints = [points[0]];
-  
-    // Determine initial direction
-    let direction;
-    if (points[0].x === points[1].x) {
-      direction = 'y';
-    } else if (points[0].y === points[1].y) {
-      direction = 'x';
-    }
-  
-    for (let i = 1; i < points.length - 1; i++) {
-      let currentPoint = points[i];
-      let nextPoint = points[i + 1];
-  
-      // Determine the current direction
-      let newDirection;
-      if (currentPoint.x === nextPoint.x) {
-        newDirection = 'y';
-      } else if (currentPoint.y === nextPoint.y) {
-        newDirection = 'x';
-      }
-  
-      // If there's a change in direction, add the current point to the reducedPoints
-      if (newDirection !== direction) {
-        reducedPoints.push(currentPoint);
-        direction = newDirection;
-      }
-    }
-  
-    // Add the last point if it's not already added
-    if (!reducedPoints.includes(points[points.length - 1])) {
-      reducedPoints.push(points[points.length - 1]);
-    }
-  
-    return reducedPoints;
+/* eslint-disable */
+
+export function reducePoints(points) {
+  if (points.length < 2) {
+    return points; // If there are less than 2 points, there's nothing to reduce.
   }
 
-  function getClosestPointOnPerimeter(point, perimeter) {
-    var closestDistance = Infinity;
-    var closestPoint = null;
-  
-    for (var i = 0; i < perimeter.length; i++) {
-      var currentPoint = perimeter[i];
-      var nextPoint = perimeter[(i + 1) % perimeter.length];
-  
-      var closestPointOnSegment = getClosestPointOnLineSegment(point, currentPoint, nextPoint);
-      var distance = Phaser.Math.Distance.Between(point.x, point.y, closestPointOnSegment.x, closestPointOnSegment.y);
-  
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestPoint = closestPointOnSegment;
-      }
+  // Array to store the reduced points
+  let reducedPoints = [points[0]];
+
+  // Determine initial direction
+  let direction;
+  if (points[0].x === points[1].x) {
+    direction = 'y';
+  } else if (points[0].y === points[1].y) {
+    direction = 'x';
+  }
+
+  for (let i = 1; i < points.length - 1; i++) {
+    let currentPoint = points[i];
+    let nextPoint = points[i + 1];
+
+    // Determine the current direction
+    let newDirection;
+    if (currentPoint.x === nextPoint.x) {
+      newDirection = 'y';
+    } else if (currentPoint.y === nextPoint.y) {
+      newDirection = 'x';
     }
-  
-    return closestPoint;
-  }
-  
-  function getClosestPointOnLineSegment(point, lineStart, lineEnd) {
-    var lineVector = new Phaser.Math.Vector2(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y);
-    var pointVector = new Phaser.Math.Vector2(point.x - lineStart.x, point.y - lineStart.y);
-  
-    var lineLengthSquared = lineVector.lengthSq();
-    var dotProduct = lineVector.x * pointVector.x + lineVector.y * pointVector.y;
-    
-    var t = Phaser.Math.Clamp(dotProduct / lineLengthSquared, 0, 1);
-  
-    var closestPointX = lineStart.x + lineVector.x * t;
-    var closestPointY = lineStart.y + lineVector.y * t;
-  
-    return new Phaser.Math.Vector2(closestPointX, closestPointY);
+
+    // If there's a change in direction, add the current point to the reducedPoints
+    if (newDirection !== direction) {
+      reducedPoints.push(currentPoint);
+      direction = newDirection;
+    }
   }
 
+  // Add the last point if it's not already added
+  if (!reducedPoints.includes(points[points.length - 1])) {
+    reducedPoints.push(points[points.length - 1]);
+  }
 
-function isPointOnLineSegment(point, lineStart, lineEnd) {
+  return reducedPoints;
+}
+
+export function getClosestPointOnPerimeter(point, perimeter) {
+  var closestDistance = Infinity;
+  var closestPoint = null;
+
+  for (var i = 0; i < perimeter.length; i++) {
+    var currentPoint = perimeter[i];
+    var nextPoint = perimeter[(i + 1) % perimeter.length];
+
+    var closestPointOnSegment = getClosestPointOnLineSegment(point, currentPoint, nextPoint);
+    var distance = Phaser.Math.Distance.Between(point.x, point.y, closestPointOnSegment.x, closestPointOnSegment.y);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestPoint = closestPointOnSegment;
+    }
+  }
+
+  return closestPoint;
+}
+  
+export function getClosestPointOnLineSegment(point, lineStart, lineEnd) {
+  var lineVector = new Phaser.Math.Vector2(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y);
+  var pointVector = new Phaser.Math.Vector2(point.x - lineStart.x, point.y - lineStart.y);
+
+  var lineLengthSquared = lineVector.lengthSq();
+  var dotProduct = lineVector.x * pointVector.x + lineVector.y * pointVector.y;
+  
+  var t = Phaser.Math.Clamp(dotProduct / lineLengthSquared, 0, 1);
+
+  var closestPointX = lineStart.x + lineVector.x * t;
+  var closestPointY = lineStart.y + lineVector.y * t;
+
+  return new Phaser.Math.Vector2(closestPointX, closestPointY);
+}
+
+
+export function isPointOnLineSegment(point, lineStart, lineEnd) {
     const d1 = Phaser.Math.Distance.Between(point.x, point.y, lineStart.x, lineStart.y);
     const d2 = Phaser.Math.Distance.Between(point.x, point.y, lineEnd.x, lineEnd.y);
     const lineLength = Phaser.Math.Distance.Between(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
@@ -88,7 +90,7 @@ function isPointOnLineSegment(point, lineStart, lineEnd) {
     return Math.abs(d1 + d2 - lineLength) < tolerance;
 }
 
-function isPointOnPerimeter(point, perimeter) {
+export function isPointOnPerimeter(point, perimeter) {
     for (let i = 0; i < perimeter.length - 1; i++) {
         if (isPointOnLineSegment(point, perimeter[i], perimeter[i + 1])) {
             return true;
@@ -103,12 +105,13 @@ function isPointOnPerimeter(point, perimeter) {
     return false;
 }
 
-function getRandomVibrantColor() {
+export function getRandomVibrantColor() {
     var letters = "0123456789ABCDEF";
     var color = "";
+    var i;
   
     // Generate a random color by selecting six random hexadecimal values
-    for (var i = 0; i < 6; i++) {
+    for (i = 0; i < 6; i++) {
       color += letters[Math.floor(Math.random() * 16)];
     }
   
@@ -118,7 +121,7 @@ function getRandomVibrantColor() {
     // If the luminance is too low, generate a new color until a vibrant one is obtained
     while (luminance < 0.3) {
       color = "";
-      for (var i = 0; i < 6; i++) {
+      for (i = 0; i < 6; i++) {
         color += letters[Math.floor(Math.random() * 16)];
       }
       luminance = calculateLuminance(color);
@@ -130,17 +133,17 @@ function getRandomVibrantColor() {
   
 // Function to calculate the luminance of a color
 function calculateLuminance(hex) {
-var r = parseInt(hex.substring(0, 2), 16) / 255;
-var g = parseInt(hex.substring(2, 4), 16) / 255;
-var b = parseInt(hex.substring(4, 6), 16) / 255;
+  var r = parseInt(hex.substring(0, 2), 16) / 255;
+  var g = parseInt(hex.substring(2, 4), 16) / 255;
+  var b = parseInt(hex.substring(4, 6), 16) / 255;
 
-// Calculate the relative luminance using the sRGB color space formula
-var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  // Calculate the relative luminance using the sRGB color space formula
+  var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-return luminance;
+  return luminance;
 }
 
-function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
+export function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
   const offset = 50; // Define the offset distance
 
   points.forEach((point, index) => {
@@ -182,7 +185,7 @@ function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0
   });
 }
 
-function clearPoints() {
+export function clearPoints() {
   circles.forEach(({ circle, tween }) => {
     circle.destroy(); // Destroy the graphics object
   });
@@ -190,7 +193,7 @@ function clearPoints() {
   circles = []; // Clear the array
 }
 
-function drawPolygon(polygonContainer, points, internalName = "unset", lineStyle = 5, color = "#FF0000", fill = false, ) {
+export function drawPolygon(polygonContainer, points, internalName = "unset", lineStyle = 5, color = "#FF0000", fill = false, ) {
   polygon = scene.add.graphics();
 
 
@@ -217,7 +220,7 @@ function drawPolygon(polygonContainer, points, internalName = "unset", lineStyle
   polygonContainer.push({name: internalName, polygon: polygon});
 }
 
-function clearPolygon(polygonContainer, internalName) {
+export function clearPolygon(polygonContainer, internalName) {
   for (let i = 0; i < polygonContainer.length; i++) {
       if (polygonContainer[i].name === internalName) {
           polygonContainer[i].polygon.clear(); // Clear the polygon
@@ -228,7 +231,7 @@ function clearPolygon(polygonContainer, internalName) {
   }
 }
 
-function isPointOnPolygonEdge(point, polygon) {
+export function isPointOnPolygonEdge(point, polygon) {
   for (let i = 0; i < polygon.length; i++) {
     let currentVertex = polygon[i];
     let nextVertex = polygon[(i + 1) % polygon.length]; // Next vertex (considering wrap-around for last vertex)

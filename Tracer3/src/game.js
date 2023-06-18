@@ -1,40 +1,41 @@
-//import TextOverlayCoordinator from './TextOverlayCoordinator.js';
-
+/* global Phaser */
+import { isPointOnPerimeter, 
+         reducePoints, 
+         clearPolygon, 
+         isPointOnPolygonEdge, 
+         getClosestPointOnPerimeter} from './utilities.js';
+import {getRightHandPath, getLeftHandPath} from './tracerGameLibrary.js';
+let trailColor = 0xFFFFFF;
+let originalColor = 0xFFFFFF;
 let debug = true;
 let gameWidth = 1024;
 let gameHeight = 1024;
 let totalCapturedPercentArea = 0;
+let debugUIText;
 let player;
-let staticUIAreaText;
-let updatedPerimeter;
-let playerSpeed = 300;
-let playerLives = 4;
 let controlButtons = []
-
 let debugGraphic;
 let rightHandPath = [];
 let leftHandPath = [];
-// Create an empty trail group
 let trail;
-let smallerPath;
 let goons = []
 let capturedGoons = []; // Declare a separate array to track captured goons globally
-let maxGoons = 4; // the number of goons to play this game
 let numBackgrounds = 4;
 let playerImageTypeCount = 20; // how many goons can be drawn from the 
 let goonImageTypeCount = 7; // how many goons can be drawn from the 
-let goon1Velocity;
 let score = 0;
 let scene;
 let superman = false;
 let cursors;
 let lineGraphics;
 let perimeters;
-let maskGraphics;
-let additiveScore = 0;
 let trailPoints = [];
-let priorPath = [];
-let circles = []; // Array to store the drawn circles
+let maxStars = 11;
+
+let playerSpeed = 300;
+let goonSpeed = 200; // Initial speed of the goons
+let playerLives = 4;
+
 let perimeter = [
 { x: 0, y: 0 },
 { x: gameWidth, y: 0 },
@@ -45,18 +46,13 @@ let perimeter = [
 let maskContainer;
 let polygonContainer = [];
 
-let numRectangles = 0;
 let numPoints = 0;
-let uiText;
-let recentDirection = null;
 let isPaused = false;
 let foreground;
 let background;
-let goonSpeed = 200; // Initial speed of the goons
-let goonRotationSpeed = 0.3; // Rotation speed multiplier
-let goonSpeedIncrease = 0.001; // Speed increase on bounce
-let isSafe = true;
 
+let goonRotationSpeed = 0.3; // Rotation speed multiplier
+let isSafe = true;
 let upButton;
 let downButton;
 let leftButton;
@@ -81,12 +77,11 @@ let config = {
     }
 };
 
+// eslint-disable-next-line no-unused-vars
 let game = new Phaser.Game(config);
-
 
 function preload() {
     // Preload assets here
-
     this.load.image(`upImage`, `assets/images/ui/up.png`);
     this.load.image(`downImage`, `assets/images/ui/down.png`);
     this.load.image(`leftImage`, `assets/images/ui/left.png`);
@@ -100,12 +95,15 @@ function preload() {
     for (let i = 1; i <= playerImageTypeCount; i++) {
         this.load.image(`player${i}`, `assets/images/players/${i}.png`);
     }    
-
+ 
+    // Load star images
+    for (let i = 1; i <= maxStars; i++) {
+        this.load.image(`star${i}`, `assets/images/trail/${i}.png`);
+    }
+ 
     for (let i = 1; i <= goonImageTypeCount; i++) {
         this.load.image(`goon${i}`, `assets/images/goons/goon${i}.png`);
     }
-
-
 }
 
 // Function to get a random array index
@@ -121,12 +119,6 @@ function create() {
     // Get random index for each variable
     let randomBackgroundIndex = getRandomIndex(numBackgrounds);
     let randomPlayerImageIndex = getRandomIndex(playerImageTypeCount);
-    
-    // Create a new TextOverlayCoordinator instance
-    // this.textOverlay = new TextOverlayCoordinator(scene);
-
-    console.log(`randomBackgroundIndex: ${randomBackgroundIndex}`);
-    console.log(`randomPlayerImageIndex: ${randomPlayerImageIndex}`);
 
     maskContainer = scene.make.graphics({ x: 0, y: 0, add: false });
     // Create background image
@@ -139,8 +131,7 @@ function create() {
 
     // Create foreground image
     foreground = this.add.image(gameWidth / 2, gameHeight / 2, `foreground${randomBackgroundIndex}`).setDepth(0);
-    maskGraphics = this.add.graphics();
-    
+        
     // Create a graphics object for drawing the trail line
     lineGraphics = scene.add.graphics();
     lineGraphics.setDepth(2);
@@ -149,15 +140,44 @@ function create() {
     player.setScale(0.35);
     player.setDepth(2);
     player.setOrigin(0.5);
-    // player.setCollideWorldBounds(true);
+
+    // Enable physics for the player sprite 
+    // added 6/17/2023 - not sure if this breaks anything
+    scene.physics.world.enable(player);
+    
+    // console.log(`player: ${player}`);
+
+    // // In the create() method or after the images are loaded
+    // const particles = this.add.particles();
+    // const emitters = [];
+
+    // // Log the loaded image keys
+    // console.log(this.textures.getTextureKeys());
+    // console.log('testing');
+
+    // // TODO: There is an error here, I think the star images aren't loading.
+    // for (let i = 1; i <= 11; i++) {
+    //     const emitter = particles.createEmitter({
+    //       frame: `star${i}`,
+    //       lifespan: 1000, // Customize lifespan as desired
+    //       scale: { start: 0.2, end: 0 }, // Customize scale range as desired
+    //       blendMode: 'ADD', // Set the blend mode to add
+    //     });
+    //     emitters.push(emitter);
+    // }
+
+    // // Position the emitter relative to the player sprite
+    // emitters.forEach((emitter) => {
+    //     emitter.startFollow(player); // Attach the emitter to the player
+    //     emitter.start();
+    // });
 
     // Create an empty perimeters group
     perimeters = this.physics.add.staticGroup();
     updatePerimeter(perimeter); // Create initial perimeter
-    let c1 = this.physics.add.collider(goons, perimeters, goonPerimeterCollisionHandler, null, this);
-    let c2 = this.physics.add.collider(goons, trail, handleGoonTrailCollision, null, this);
-    let c3 = this.physics.add.collider(trail, perimeters, handlePlayerPerimeterCollision, null, this);
-
+    this.physics.add.collider(goons, perimeters, goonPerimeterCollisionHandler, null, this);
+    this.physics.add.collider(goons, trail, handleGoonTrailCollision, null, this);
+    this.physics.add.collider(trail, perimeters, handlePlayerPerimeterCollision, null, this);
 
     // Create goons
     let goonImages = ['goon1', 'goon2', 'goon3','goon4', 'goon5', 'goon6','goon7'];  // Add the keys for more goon images here as needed
@@ -188,9 +208,8 @@ function create() {
     scene.physics.world.setBounds(-10, -10, gameWidth + 20, gameHeight + 20); // Increase the world bounds by 10 pixels on each side
     scene.cameras.main.setBounds(0, 0, gameWidth, gameHeight); // Adjust the camera to focus on the playable area
 
-
     // Create UI text
-    uiText = scene.add.text(10, 10, '', {
+    debugUIText = scene.add.text(10, 10, '', {
         fontFamily: 'Arial',
         fontSize: 20,
         color: '#ffffff',
@@ -259,10 +278,12 @@ function create() {
     controlButtons.push(upButton);
 }
 
+// eslint-disable-next-line no-unused-vars
 function startTurbo(player)
 {
     console.log("Shift pressed!");
 }
+// eslint-disable-next-line no-unused-vars
 function stopTurbo(player)
 {
     console.log("Shift released!");
@@ -281,21 +302,14 @@ function update() {
         return;
     }
 
-    // Rotate player at 0.5 cycles/sec
-    // let rotationSpeed = 0.5 * Math.PI; // Convert cycles/sec to radians/sec
-    // player.rotation += rotationSpeed * scene.sys.game.loop.delta / 1000; // Divide by 1000 to convert to seconds
-
     handlePlayerMovement();
 
-    // Check if a new point is added
     let currentPoint = { x: player.x, y: player.y };
     let lastPoint = trailPoints[trailPoints.length - 1];
 
-    // console.log(currentPoint);
-    // console.log(perimeter);
     isSafe = isPointOnPerimeter( currentPoint, perimeter );
 
-    // check if the player is not safe. In which case store their path!
+    // check if the player is not safe. In which case store their path and draw it.
     if (!isSafe) {
         if (!lastPoint || currentPoint.x !== lastPoint.x || currentPoint.y !== lastPoint.y) {
             trailPoints.push(currentPoint);
@@ -303,7 +317,7 @@ function update() {
 
             // Draw the trail line
             lineGraphics.clear();
-            lineGraphics.lineStyle(3, 0xffffff);
+            lineGraphics.lineStyle(3, trailColor);
             for (let i = 0; i < trailPoints.length - 1; i++) {
                 let p1 = trailPoints[i];
                 let p2 = trailPoints[i + 1];
@@ -323,7 +337,6 @@ function update() {
     }
 
     // a return to the perimeter
-    // I think this code is being called when we adjust the player's position after having crossed over a perimeter because I think trailPoints is getting erased
     if (isSafe && trailPoints.length > 1)
     {
         trailPoints.push(currentPoint);
@@ -336,16 +349,12 @@ function update() {
         let scoreAdded;
 
         clearPolygon(polygonContainer, "perimeter");
-        
-        let scaleFactor = 1_000_000 - 1000; // 999,000
-        
+                
         // carves the polygon from the foreground.
         if (rightHandArea < leftHandArea) {
             //console.log("Selecting RightHandArea for masking.");
             writeAreaUI(rightHandArea);           
             totalCapturedPercentArea += 100 * rightHandArea / (gameHeight * gameWidth);            
-            // normalize, apply logarithmic scoring, and scale the result
-            additiveScore = 1000 + scaleFactor * Math.log((rightHandArea / (gameWidth * gameHeight)) + 1);
             createMask(rightHandPath, maskContainer, scene, foreground);
             perimeter = leftHandPath; 
             scoreAdded = rightHandArea;                
@@ -354,18 +363,15 @@ function update() {
             // normalize, apply logarithmic scoring, and scale the result
             writeAreaUI(leftHandArea);
             totalCapturedPercentArea += 100 * leftHandArea / (gameHeight * gameWidth);
-            additiveScore = 1000 + scaleFactor * Math.log((leftHandArea / (gameWidth * gameHeight)) + 1);
             createMask(leftHandPath, maskContainer, scene, foreground);
             perimeter = rightHandPath;
             scoreAdded = leftHandArea;
         }
 
         score+=scoreAdded;
-        // Update the perimeter within the game world to enable collision
-        updatePerimeter(perimeter);
-        // Update the player's trail with the game world to enable collistion        
-        priorPath = trailPoints;
-        trailPoints = []; 
+        
+        updatePerimeter(perimeter); // Update the perimeter within the game world to enable collision        
+        trailPoints = []; // Update the player's trail with the game world to enable collistion
     }
 
     // Inside the update function
@@ -378,7 +384,7 @@ function update() {
                 // Stop goon's movement
                 goon.body.setVelocity(0);
         
-                console.log("Capturing a goon!");
+                // console.log("Capturing a goon!");
                 // Generate a random score for killing the goon
                 const myScore = Phaser.Math.RoundTo(Phaser.Math.Between(50000, 250000),-4);
                 score += myScore;
@@ -445,7 +451,7 @@ function update() {
     }    
     
     if (goons.filter(goon => goon && goon.body).length === 0) {
-        console.log("Victory Condition Met!");
+        // console.log("Victory Condition Met!");
     
         // Create text objects
         let victoryText = scene.add.text(gameWidth / 2, gameHeight / 2 -120, 'GAME OVER!\r\nYOU WIN', 
@@ -462,8 +468,8 @@ function update() {
 function writeUI() {
     // Update the UI text here
     if (debug) {
-        uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%`);
-        uiText.setDepth(3);
+        debugUIText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%\r\nPlayer Lives: ${playerLives}`);
+        debugUIText.setDepth(3);
     }
 
     //textOverlay.clear();
@@ -473,11 +479,13 @@ function writeUI() {
 
 function writeAreaUI  (area ) {
     let percentCaptured = 100 * area / (gameWidth*gameHeight);
+
+    let capturedString;
     capturedString = "Captured " + percentCaptured.toFixed(2) + "%";
-    console.log(`Area carved! ${percentCaptured}%`);
+    // console.log(`Area carved! ${percentCaptured}%`);
 
     // Create the floating score text
-    const text = scene.add.text(gameWidth/2, gameHeight/2, capturedString, {
+    const text = scene.add.text(player.x, player.y, capturedString, {
         fontFamily: 'Arial',
         fontSize: '48px',
         fill: '#00ff00', // Green color
@@ -509,28 +517,28 @@ function handleButtonClick() {
     // Handle the specific button's functionality
     if (clickedButton === upButton) {
       // Handle up button click
-      console.log("Up button clicked!");
+      // console.log("Up button clicked!");
       if( player.y > 0 + halfHeight && player.body.velocity.y <= 0) {
         player.setVelocityY(-1 * playerSpeed);
         player.setVelocityX(0);
       }
     } else if (clickedButton === downButton) {
       // Handle down button click
-      console.log("Down button clicked!");
+      // console.log("Down button clicked!");
       if (player.y < gameHeight - halfHeight && player.body.velocity.y >= 0) {
         player.setVelocityY(playerSpeed);
         player.setVelocityX(0);
       }
     } else if (clickedButton === leftButton) {
       // Handle left button click
-      console.log("Left button clicked!");
+      // console.log("Left button clicked!");
       if (player.x > 0 + halfWidth && player.body.velocity.x <= 0) {
         player.setVelocityX(-1 * playerSpeed);
         player.setVelocityY(0);
       }
     } else if (clickedButton === rightButton) {
       // Handle right button click
-      console.log("Right button clicked!");
+      // console.log("Right button clicked!");
       if (player.x < gameWidth - halfWidth && player.body.velocity.x >= 0) {
         player.setVelocityX(playerSpeed);
         player.setVelocityY(0);
@@ -544,7 +552,6 @@ function togglePause() {
 
     // Reset recent direction when resuming
     if (!isPaused) {
-        recentDirection = null;
         player.rotation = 0;
         player.setVelocityX(0);
         player.setVelocityY(0);
@@ -583,7 +590,7 @@ function handlePlayerMovement() {
         
         if (isOutsidePerimeter && isNotOnPerimeter) {
             // Player is on a point outside the perimeter, handle the logic here
-            console.log("Player is outside the perimeter!");
+            // console.log("Player is outside the perimeter!");
 
             // Find the closest point along the perimeter to the player
             let closestPoint = getClosestPointOnPerimeter(playerPoint, perimeter);
@@ -618,21 +625,30 @@ function createMask(polygonPoints, container, scene, worldObject) {
 }
 
 
-
+// eslint-disable-next-line no-unused-vars
 function handleGoonTrailCollision(goon, trail) {
+
+    trailColor = 0xFF0000;
+    // After 2 seconds, revert back to the original color
+    setTimeout(() => {
+        trailColor = originalColor;
+    }, 200);
+
     // Handle the collision event here
     if (!superman) {
-        console.log('Ouch! That hurt. Plug for future work to cause harm to the player.');
+        // console.log('Ouch! That hurt. Plug for future work to cause harm to the player.');
         shakeScreen();
         playerLives--;
     }
 }
 
+// eslint-disable-next-line no-unused-vars
 function goonPerimeterCollisionHandler(goon, perimeter) {
     // Handle the collision event here
     // console.log('Goon collided with a perimeter!');
 }
 
+// eslint-disable-next-line no-unused-vars
 function handlePlayerPerimeterCollision(player, perimeter) {
     // console.log('Player collided with a wall!');
 }
@@ -697,10 +713,9 @@ function toggleDebugLines() {
     debugGraphic.visible = !debugGraphic.visible;
   }
 
-
 // Function to shake the screen  
 function shakeScreen() {
     let camera = scene.cameras.main;
-    console.log('Shaking screen! with Camera = ' + camera);
-    camera.shake(500, 0.005);
+    // console.log('Shaking screen! with Camera = ' + camera);
+    camera.shake(100, 0.005);
 }

@@ -1,16 +1,18 @@
+import { isPointOnLineSegment } from './utilities.js';
+
+
 // note there's a bug in this, if the departure and return are on the same line then the smaller path is always returned
-// @TODO: fix this so that if the departure and return points are on the same segment, we select the closer of the next perimeter point or the departure point
-//        but only return the departure point if it's in between the player's point and the perimeter
-function getRightHandPath(playerPath, perimeter) {
+export function getRightHandPath(playerPath, perimeter) {
     let rightHandPath = [];
-    let returnIndex, departureIndex;
+    let returnIndex;
+    // let departureIndex;
 
     // Find indices for departure and return points in the perimeter array
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
         let p2 = perimeter[(i + 1) % perimeter.length];
         if (isPointOnLineSegment(playerPath[0], p1, p2)) {
-            departureIndex = i;
+            // departureIndex = i;
             // console.log(`Departure index identified: ${departureIndex}`);
         }
         if (isPointOnLineSegment(playerPath[playerPath.length - 1], p1, p2)) {
@@ -29,7 +31,7 @@ function getRightHandPath(playerPath, perimeter) {
     // handle the special case where the departure and return points are on the same line and the next point along the right hand
     // path is actually the departure point
     if (isPointOnLineSegment(playerPath[0], playerPath[playerPath.length-1], perimeter[(i + 1) % perimeter.length])) {
-        console.log("We hit the special case for right hand path calculation.");
+        // console.log("We hit the special case for right hand path calculation.");
         for (let j = 0; j < playerPath.length; j++) {
             rightHandPath.push(playerPath[j]);
         }
@@ -37,6 +39,7 @@ function getRightHandPath(playerPath, perimeter) {
     }
 
     let firstIteration = true; // added in case the starting and ending point are on the same line and the ending point is to the LEFT of the starting point. This is because the code below doesn't account properly for this case and because it's handled explicitly above
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         // Get the next point on the perimeter
         let nextPoint = perimeter[(i + 1) % perimeter.length];
@@ -62,16 +65,17 @@ function getRightHandPath(playerPath, perimeter) {
 }
 
 
-function getLeftHandPath(playerPath, perimeter) {
+export function getLeftHandPath(playerPath, perimeter) {
     let leftHandPath = [];
-    let returnIndex, departureIndex;
+    let returnIndex;
+    // let departureIndex;
 
     // Find indices for departure and return points in the perimeter array
     for (let i = 0; i < perimeter.length; i++) {
         let p1 = perimeter[i];
         let p2 = perimeter[(i - 1 + perimeter.length) % perimeter.length]; // Moved to the previous point
         if (isPointOnLineSegment(playerPath[0], p1, p2)) {
-            departureIndex = i;
+            // departureIndex = i;
             // console.log(`Departure index identified: ${departureIndex}`);
         }
         if (isPointOnLineSegment(playerPath[playerPath.length - 1], p1, p2)) {
@@ -88,12 +92,12 @@ function getLeftHandPath(playerPath, perimeter) {
 
     // handle the special case where the departure and return points are on the same line and the next point along the right hand
     // path is actually the departure point
-    console.log("i = " + i)
-    console.log(playerPath[playerPath.length-1]);
-    console.log(perimeter[i]);
+    // console.log("i = " + i)
+    // console.log(playerPath[playerPath.length-1]);
+    // console.log(perimeter[i]);
 
     if (isPointOnLineSegment(playerPath[0], playerPath[playerPath.length-1], perimeter[(i - 1 + perimeter.length) % perimeter.length])) {
-        console.log("We hit the special case for left hand path calculation.");
+        // console.log("We hit the special case for left hand path calculation.");
         for (let j = 0; j < playerPath.length; j++) {
             leftHandPath.push(playerPath[j]);
         }
@@ -101,6 +105,7 @@ function getLeftHandPath(playerPath, perimeter) {
     }
 
     let firstIteration = true;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         // Get the previous point on the perimeter
         let prevPoint = perimeter[(i - 1 + perimeter.length) % perimeter.length]; // Moved to the previous point
@@ -121,39 +126,4 @@ function getLeftHandPath(playerPath, perimeter) {
     }
 
     return leftHandPath;
-}
-
-
-
-function logwalls() {
-    let walls = perimeters.getChildren();
-    for (let i = 0; i < walls.length; i++) {
-        let wall = walls[i];
-
-        let x1 = wall.x - wall.displayWidth / 2;
-        let y1 = wall.y - wall.displayHeight / 2;
-        let x2 = wall.x + wall.displayWidth / 2;
-        let y2 = wall.y + wall.displayHeight / 2;
-
-        console.log(`${i}(${x1.toFixed(0)},${y1.toFixed(0)}) ${i+1}(${x2.toFixed(0)},${y2.toFixed(0)})`);
-    }
-}
-
-function drawWalls(polygonContainer) {
-    let walls = perimeters.getChildren();
-    for (let i = 0; i < walls.length; i++) {
-        let wall = walls[i];
-
-        let x1 = wall.x - wall.displayWidth / 2;
-        let y1 = wall.y - wall.displayHeight / 2;
-        let x2 = wall.x + wall.displayWidth / 2;
-        let y2 = wall.y + wall.displayHeight / 2;
-
-        // Define the points of the wall
-        let wallPoints = [{x: x1, y: y1}, {x: x2, y: y2}];
-
-        // Draw the wall
-        drawPolygon(polygonContainer, wallPoints,"wall", 15, "#00FF00")
-        
-    }
 }

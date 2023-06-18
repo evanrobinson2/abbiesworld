@@ -1,5 +1,4 @@
-//import TextOverlayCoordinator from './TextOverlayCoordinator.js';
-
+/* eslint-disable */
 let debug = true;
 let gameWidth = 1024;
 let gameHeight = 1024;
@@ -185,7 +184,7 @@ function create() {
 
 
     // Create UI text
-    uiText = scene.add.text(10, 10, '', {
+    debugUIText = scene.add.text(10, 10, '', {
         fontFamily: 'Arial',
         fontSize: 20,
         color: '#ffffff',
@@ -457,8 +456,8 @@ function update() {
 function writeUI() {
     // Update the UI text here
     if (debug) {
-        uiText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%`);
-        uiText.setDepth(3);
+        debugUIText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%`);
+        debugUIText.setDepth(3);
     }
 
     //textOverlay.clear();

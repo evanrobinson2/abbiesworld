@@ -1,4 +1,8 @@
-function reducePoints(points) {
+/* global scene */
+/* global Phaser */
+  /* global circles */
+
+export function reducePoints(points) {
     if (points.length < 2) {
       return points; // If there are less than 2 points, there's nothing to reduce.
     }
@@ -39,45 +43,45 @@ function reducePoints(points) {
     }
   
     return reducedPoints;
-  }
+}
 
-  function getClosestPointOnPerimeter(point, perimeter) {
-    var closestDistance = Infinity;
-    var closestPoint = null;
-  
-    for (var i = 0; i < perimeter.length; i++) {
-      var currentPoint = perimeter[i];
-      var nextPoint = perimeter[(i + 1) % perimeter.length];
-  
-      var closestPointOnSegment = getClosestPointOnLineSegment(point, currentPoint, nextPoint);
-      var distance = Phaser.Math.Distance.Between(point.x, point.y, closestPointOnSegment.x, closestPointOnSegment.y);
-  
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestPoint = closestPointOnSegment;
-      }
+export function getClosestPointOnPerimeter(point, perimeter) {
+  var closestDistance = Infinity;
+  var closestPoint = null;
+
+  for (var i = 0; i < perimeter.length; i++) {
+    var currentPoint = perimeter[i];
+    var nextPoint = perimeter[(i + 1) % perimeter.length];
+
+    var closestPointOnSegment = getClosestPointOnLineSegment(point, currentPoint, nextPoint);
+    var distance = Phaser.Math.Distance.Between(point.x, point.y, closestPointOnSegment.x, closestPointOnSegment.y);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestPoint = closestPointOnSegment;
     }
-  
-    return closestPoint;
-  }
-  
-  function getClosestPointOnLineSegment(point, lineStart, lineEnd) {
-    var lineVector = new Phaser.Math.Vector2(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y);
-    var pointVector = new Phaser.Math.Vector2(point.x - lineStart.x, point.y - lineStart.y);
-  
-    var lineLengthSquared = lineVector.lengthSq();
-    var dotProduct = lineVector.x * pointVector.x + lineVector.y * pointVector.y;
-    
-    var t = Phaser.Math.Clamp(dotProduct / lineLengthSquared, 0, 1);
-  
-    var closestPointX = lineStart.x + lineVector.x * t;
-    var closestPointY = lineStart.y + lineVector.y * t;
-  
-    return new Phaser.Math.Vector2(closestPointX, closestPointY);
   }
 
+  return closestPoint;
+}
 
-function isPointOnLineSegment(point, lineStart, lineEnd) {
+export function getClosestPointOnLineSegment(point, lineStart, lineEnd) {
+  var lineVector = new Phaser.Math.Vector2(lineEnd.x - lineStart.x, lineEnd.y - lineStart.y);
+  var pointVector = new Phaser.Math.Vector2(point.x - lineStart.x, point.y - lineStart.y);
+
+  var lineLengthSquared = lineVector.lengthSq();
+  var dotProduct = lineVector.x * pointVector.x + lineVector.y * pointVector.y;
+  
+  var t = Phaser.Math.Clamp(dotProduct / lineLengthSquared, 0, 1);
+
+  var closestPointX = lineStart.x + lineVector.x * t;
+  var closestPointY = lineStart.y + lineVector.y * t;
+
+  return new Phaser.Math.Vector2(closestPointX, closestPointY);
+}
+
+
+export function isPointOnLineSegment(point, lineStart, lineEnd) {
     const d1 = Phaser.Math.Distance.Between(point.x, point.y, lineStart.x, lineStart.y);
     const d2 = Phaser.Math.Distance.Between(point.x, point.y, lineEnd.x, lineEnd.y);
     const lineLength = Phaser.Math.Distance.Between(lineStart.x, lineStart.y, lineEnd.x, lineEnd.y);
@@ -88,7 +92,7 @@ function isPointOnLineSegment(point, lineStart, lineEnd) {
     return Math.abs(d1 + d2 - lineLength) < tolerance;
 }
 
-function isPointOnPerimeter(point, perimeter) {
+export function isPointOnPerimeter(point, perimeter) {
     for (let i = 0; i < perimeter.length - 1; i++) {
         if (isPointOnLineSegment(point, perimeter[i], perimeter[i + 1])) {
             return true;
@@ -103,12 +107,13 @@ function isPointOnPerimeter(point, perimeter) {
     return false;
 }
 
-function getRandomVibrantColor() {
-    var letters = "0123456789ABCDEF";
-    var color = "";
+export function getRandomVibrantColor() {
+    let letters = "0123456789ABCDEF";
+    let color = "";
+    let i;
   
     // Generate a random color by selecting six random hexadecimal values
-    for (var i = 0; i < 6; i++) {
+    for (i = 0; i < 6; i++) {
       color += letters[Math.floor(Math.random() * 16)];
     }
   
@@ -118,7 +123,7 @@ function getRandomVibrantColor() {
     // If the luminance is too low, generate a new color until a vibrant one is obtained
     while (luminance < 0.3) {
       color = "";
-      for (var i = 0; i < 6; i++) {
+      for (i = 0; i < 6; i++) {
         color += letters[Math.floor(Math.random() * 16)];
       }
       luminance = calculateLuminance(color);
@@ -130,17 +135,17 @@ function getRandomVibrantColor() {
   
 // Function to calculate the luminance of a color
 function calculateLuminance(hex) {
-var r = parseInt(hex.substring(0, 2), 16) / 255;
-var g = parseInt(hex.substring(2, 4), 16) / 255;
-var b = parseInt(hex.substring(4, 6), 16) / 255;
+  var r = parseInt(hex.substring(0, 2), 16) / 255;
+  var g = parseInt(hex.substring(2, 4), 16) / 255;
+  var b = parseInt(hex.substring(4, 6), 16) / 255;
 
-// Calculate the relative luminance using the sRGB color space formula
-var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  // Calculate the relative luminance using the sRGB color space formula
+  var luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-return luminance;
+  return luminance;
 }
 
-function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
+export function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0x000000, textColor = 0xffffff, gameWidth, gameHeight) {
   const offset = 50; // Define the offset distance
 
   points.forEach((point, index) => {
@@ -182,22 +187,24 @@ function drawPoints(points, diameter = 10, fillColor = 0xff0000, strokeColor = 0
   });
 }
 
-function clearPoints() {
-  circles.forEach(({ circle, tween }) => {
+export function clearPoints(circles) {
+  circles.forEach(({ circle }) => {
     circle.destroy(); // Destroy the graphics object
   });
 
   circles = []; // Clear the array
 }
 
-function drawPolygon(polygonContainer, points, internalName = "unset", lineStyle = 5, color = "#FF0000", fill = false, ) {
+export function drawPolygon(polygonContainer, points, internalName = "unset", lineStyle = 5, color = "#FF0000", fill = false, ) {
+  let polygon;
+
   polygon = scene.add.graphics();
 
 
   if (internalName === "unset") {
       // set internalName to "polygon-{polygonContainer.size}"
       internalName = `polygon-${polygonContainer.length}`;
-      console.log("Added " + internalName + " to polygon array");
+      // console.log("Added " + internalName + " to polygon array");
   }
 
   polygon.lineStyle(lineStyle, parseInt(color.slice(1), 16)); // Set stroke color and line width
@@ -212,12 +219,12 @@ function drawPolygon(polygonContainer, points, internalName = "unset", lineStyle
   polygon.closePath(); // Close the shape
 
   polygon.strokePath(); // Draw the outline
-  if (fill) { polygon.fillPath() }; // Fill the shape
+  if (fill) { polygon.fillPath() } // Fill the shape
 
   polygonContainer.push({name: internalName, polygon: polygon});
 }
 
-function clearPolygon(polygonContainer, internalName) {
+export function clearPolygon(polygonContainer, internalName) {
   for (let i = 0; i < polygonContainer.length; i++) {
       if (polygonContainer[i].name === internalName) {
           polygonContainer[i].polygon.clear(); // Clear the polygon
@@ -228,11 +235,11 @@ function clearPolygon(polygonContainer, internalName) {
   }
 }
 
-function isPointOnPolygonEdge(point, polygon) {
+export function isPointOnPolygonEdge(point, polygon) {
   for (let i = 0; i < polygon.length; i++) {
     let currentVertex = polygon[i];
     let nextVertex = polygon[(i + 1) % polygon.length]; // Next vertex (considering wrap-around for last vertex)
-    let edge = new Phaser.Geom.Line(currentVertex.x, currentVertex.y, nextVertex.x, nextVertex.y);
+    // let edge = new Phaser.Geom.Line(currentVertex.x, currentVertex.y, nextVertex.x, nextVertex.y);
     if (isPointOnLineSegment(point, currentVertex, nextVertex)) {
       return true;
     }
