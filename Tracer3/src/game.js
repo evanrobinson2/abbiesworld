@@ -4,56 +4,62 @@ import { isPointOnPerimeter,
          clearPolygon, 
          isPointOnPolygonEdge, 
          getClosestPointOnPerimeter} from './utilities.js';
-import {getRightHandPath, getLeftHandPath} from './tracerGameLibrary.js';
+import { getRightHandPath, getLeftHandPath } from './tracerGameLibrary.js';
+
+// eslint-disable-next-line no-unused-vars
+import TextOverlayCoordinator from './TextOverlayCoordinator.js';
+
+let gameWidth = 1024;
+let gameHeight = 1024;
+let score = 0;
+let superman = false;
 
 let trailColor = 0xFFFFFF;
 let originalColor = 0xFFFFFF;
 let debug = true;
-let gameWidth = 1024;
-let gameHeight = 1024;
 let totalCapturedPercentArea = 0;
 let debugUIText;
 let player;
-let controlButtons = []
 let debugGraphic;
 let rightHandPath = [];
 let leftHandPath = [];
 let trail;
-let goons = []
-let capturedGoons = []; // Declare a separate array to track captured goons globally
+
 let numBackgrounds = 4;
 let playerImageTypeCount = 20; // how many goons can be drawn from the 
 let goonImageTypeCount = 7; // how many goons can be drawn from the 
-let score = 0;
+
 let scene;
-let superman = false;
 let cursors;
 let lineGraphics;
 let perimeters;
 let trailPoints = [];
-let maxStars = 11;
+let isSafe = true;
 
+let maxStars = 11;
 let playerSpeed = 300;
 let goonSpeed = 200; // Initial speed of the goons
+let goons = []
+let capturedGoons = []; // Declare a separate array to track captured goons globally
 let playerLives = 4;
 let goonRotationSpeed = 0.3; // Rotation speed multiplier
 
 let perimeter = [
-{ x: 0, y: 0 },
-{ x: gameWidth, y: 0 },
-{ x: gameWidth, y: gameHeight },
-{ x: 0, y: gameHeight }
+    { x: 0, y: 0 },
+    { x: gameWidth, y: 0 },
+    { x: gameWidth, y: gameHeight },
+    { x: 0, y: gameHeight }
 ];
 
 let maskContainer;
 let polygonContainer = [];
 
-let numPoints = 0;
-let isPaused = false;
+let numTrailPoints = 0;
+let isPaused = false; 
 let foreground;
 let background;
 
-let isSafe = true;
+let controlButtons = []
 let upButton;
 let downButton;
 let leftButton;
@@ -110,7 +116,7 @@ function preload() {
 // Function to get a random array index
 function getRandomIndex(n) {
     return Math.floor(Math.random() * n)+1;
-  }
+}
   
 
 function create() {
@@ -205,8 +211,7 @@ function create() {
     });
 
     // Set world bounds
-    
-    scene.physics.world.setBounds(-10, -10, gameWidth + 20, gameHeight + 20); // Increase the world bounds by 10 pixels on each side
+    // scene.physics.world.setBounds(-10, -10, gameWidth + 20, gameHeight + 20); // Increase the world bounds by 10 pixels on each side
     scene.cameras.main.setBounds(0, 0, gameWidth, gameHeight); // Adjust the camera to focus on the playable area
 
     // Create UI text
@@ -290,7 +295,6 @@ function stopTurbo(player)
     console.log("Shift released!");
 }
 
-
 function update() {
     // Update game logic here
     // Update UI text
@@ -314,7 +318,7 @@ function update() {
     if (!isSafe) {
         if (!lastPoint || currentPoint.x !== lastPoint.x || currentPoint.y !== lastPoint.y) {
             trailPoints.push(currentPoint);
-            numPoints = trailPoints.length - 1;
+            numTrailPoints = trailPoints.length - 1;
 
             // Draw the trail line
             lineGraphics.clear();
@@ -469,7 +473,7 @@ function update() {
 function writeUI() {
     // Update the UI text here
     if (debug) {
-        debugUIText.setText(`Number of Trailpoints: ${numPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%\r\nPlayer Lives: ${playerLives}`);
+        debugUIText.setText(`Number of Trailpoints: ${numTrailPoints}\r\nPaused: ${isPaused}\r\nIs Safe: ${isSafe}\r\nScore: ${Math.round(score).toLocaleString()}\r\nGoon Length: ${goons.length}\r\nTotal Area: ${totalCapturedPercentArea.toFixed(2)}%\r\nPlayer Lives: ${playerLives}`);
         debugUIText.setDepth(3);
     }
 
